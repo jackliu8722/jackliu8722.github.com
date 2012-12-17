@@ -2,10 +2,10 @@
 #      Main Configs       #
 # ----------------------- #
 
-url: http://yoursite.com
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+url: http://jackliu8722.github.com
+title: Jackliu's Blog
+subtitle: 领袖与跟风者的区别就在于创新——乔布斯
+author: jackliu
 simple_search: http://google.com/search
 description:
 
@@ -45,7 +45,7 @@ titlecase: true       # Converts page and post titles to titlecase
 
 # list each of the sidebar modules you want to include, in the order you want them to appear.
 # To add custom asides, create files in /source/_includes/custom/asides/ and add them to the list like 'custom/asides/custom_aside_name.html'
-default_asides: [asides/recent_posts.html, asides/github.html, asides/twitter.html, asides/delicious.html, asides/pinboard.html, asides/googleplus.html]
+default_asides: [asides/recent_posts.html, asides/github.html,asides/weibo.html , asides/twitter.html, asides/delicious.html, asides/pinboard.html, asides/googleplus.html]
 
 # Each layout uses the default asides, but they can have their own asides instead. Simply uncomment the lines below
 # and add an array with the asides you want to use.
@@ -63,13 +63,21 @@ github_repo_count: 0
 github_show_profile_link: true
 github_skip_forks: true
 
+#sina weibo
+weibo_uid: 1835292725
+weibo_verifier: d90a04d3
+weibo_fansline: 0
+weibo_show: true
+weibo_pic: true
+weibo_skin: 10
+weibo_share: false
 # Twitter
 twitter_user:
 twitter_tweet_count: 4
 twitter_show_replies: false
 twitter_follow_button: true
 twitter_show_follower_count: false
-twitter_tweet_button: true
+twitter_tweet_button: false
 
 # Google +1
 google_plus_one: false
@@ -91,6 +99,9 @@ delicious_count: 3
 # Disqus Comments
 disqus_short_name:
 disqus_show_comment_count: false
+
+#doushuo
+duoshuo_show_comment_count: true
 
 # Google Analytics
 google_analytics_tracking_id:
