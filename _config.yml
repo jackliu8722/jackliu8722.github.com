@@ -3,7 +3,7 @@
 # ----------------------- #
 
 url: http://jackliu8722.github.com
-title: Jackliu's Blog
+title: 精神兵的 Blog
 subtitle: 领袖与跟风者的区别就在于创新——乔布斯
 author: jackliu
 simple_search: http://google.com/search
@@ -33,6 +33,7 @@ destination: public
 plugins: plugins
 code_dir: downloads/code
 category_dir: blog/categories
+category_title_prefix: "目录: "
 markdown: rdiscount
 pygments: false # default python pygments have been replaced by pygments.rb
 
