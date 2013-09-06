@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Jackliu's Blog]]></title>
+  <title><![CDATA[精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2012-12-18T14:18:23+08:00</updated>
+  <updated>2013-09-06T10:53:31+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -12,6 +12,28 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Octopress的安装与配置]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/09/05/octopressde-an-zhuang-yu-pei-zhi/"/>
+    <updated>2013-09-05T17:35:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/09/05/octopressde-an-zhuang-yu-pei-zhi</id>
+    <content type="html"><![CDATA[<p>  Octopress在这里就不多介绍了，它是一个轻量级的开源博客系统，用Ruby实现的。如果想搭建自己的博客系统，可以选择这个开源的东东，而且还可以托管到github上，相当的不错。想了解更多的信息， 在google里搜搜就知道了。
+  Octopress的安装与配置网上有大量的文章，我这里也不再单独写个文章来介绍，其实写出来与网上的安装过程大同小异，这里只是记录了安装与配置的相关文章地址，方便大家。鄙视者可以拍砖的哟！！！！</p>
+
+<p>1 <a href="http://octopress.org/"><strong>Octopress主页</strong></a></p>
+
+<p>2  <a href="http://www.cnblogs.com/rubylouvre/archive/2012/06/10/2543706.html"><strong>利用GitHub Pages安装部署Octopress博客</strong></a></p>
+
+<p>3 <a href="http://www.360doc.com/content/12/0216/17/1016783_187135339.shtml"><strong>Octopress个性化配置</strong></a></p>
+
+<p>4 <a href="http://caok1231.iteye.com/blog/1565853"><strong>为Octopress增加文章分类</strong></a></p>
+
+<p>5 <a href="http://geron.heroku.com/blog/2012/03/octo-cate-cn-spo/"><strong>Octopress博客分类添加中文支持</strong></a></p>
+
+<p>  目前就这些吧，今后发现什么好的插件再更新，哈哈。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Hello Octopress]]></title>
