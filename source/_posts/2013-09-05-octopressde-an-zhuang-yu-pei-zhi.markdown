@@ -3,7 +3,7 @@ layout: post
 title: "Octopress的安装与配置"
 date: 2013-09-05 17:35
 comments: true
-categories: 其它{ML}
+categories: 其它{others}
 ---
 
   Octopress在这里就不多介绍了，它是一个轻量级的开源博客系统，用Ruby实现的。如果想搭建自己的博客系统，可以选择这个开源的东东，而且还可以托管到github上，相当的不错。想了解更多的信息， 在google里搜搜就知道了。
@@ -18,6 +18,8 @@ categories: 其它{ML}
 4 [**为Octopress增加文章分类**](http://caok1231.iteye.com/blog/1565853)
 
 5 [**Octopress博客分类添加中文支持**](http://geron.heroku.com/blog/2012/03/octo-cate-cn-spo/)
+
+6 [**Octopress添加中文支持另外一种方法**](http://blog.sprabbit.com/blog/2012/03/23/octopress/)
 
   目前就这些吧，今后发现什么好的插件再更新，哈哈。
 

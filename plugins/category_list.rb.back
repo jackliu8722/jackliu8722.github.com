@@ -48,22 +48,12 @@ module Jekyll
       html = "<ul>\n"
       # case insensitive sorting
       @categories.keys.sort_by{ |str| str.downcase }.each do |category|
-        #####
-         #将本get_catetory_url 获取的url用以下替换  /blog/categories/#{category[/(?<={)[^}]*/]}/'>#{category[/[^{]*/]}
-         
-         #html << "<li class='category'><a href='/blog/categories/#{category[/(?<={)[^}]*/]}/'>#{category[/[^{]*/]} (#{posts_in_category})</a></li>\n"
-        #####
+        url = get_category_url category
         if @config['category_counter']
-          html << "  <li><a href='/blog/categories/#{category[/(?<={)[^}]*/]}/'>#{category[/[^{]*/]} (#{@categories[category].count})</a></li>\n"
+          html << "  <li><a href='#{url}'>#{category.capitalize} (#{@categories[category].count})</a></li>\n"
         else
-          html << "  <li><a href='/blog/categories/#{category[/(?<={)[^}]*/]}/'>#{category[/[^{]*/]} </a></li>\n"
+          html << "  <li><a href='#{url}'>#{category.capitalize}</a></li>\n"
         end
-        #url = get_category_url category
-        #if @config['category_counter']
-        #  html << "  <li><a href='#{url}'>#{category.capitalize} (#{@categories[category].count})</a></li>\n"
-        #else
-        #  html << "  <li><a href='#{url}'>#{category.capitalize}</a></li>\n"
-        #end
       end
       html << "</ul>"
       File.open(File.join(@source, '_includes/asides/categories_sidebar.html'), 'w') do |file|

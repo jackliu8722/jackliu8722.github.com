@@ -3,7 +3,7 @@ layout: post
 title: "Hello Octopress"
 date: 2012-12-17 20:16
 comments: true
-categories: 
+categories: 其它{others}
 ---
 ##引言
    以前光顾着学习了，不爱写博客，马上就要工作了，得养成写博客总结的习惯，从现在做起吧。Hello World大家都见过很多了，今天我来写个Hello Octopress，其实大家都明白，跟Hello World没啥区别，让我们开始吧。
