@@ -9,7 +9,21 @@
   <meta name="author" content="jackliu">
 
   
-  <meta name="description" content="Octopress在这里就不多介绍了，它是一个轻量级的开源博客系统，用Ruby实现的。如果想搭建自己的博客系统，可以选择这个开源的东东，而且还可以托管到github上，相当的不错。想了解更多的信息， 在google里搜搜就知道了。 Octopress的安装与配置网上有大量的文章， &hellip;">
+  <meta name="description" content="Zookeeper中，server的启动入口为类org.apache.zookeeper.server.quorum.QuorumPeerMain的main方法，由zkServer.sh脚本调用。其main方法的内容如下： 1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -28,6 +42,38 @@
   <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
 <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$$$','$$$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
   
 
@@ -58,11 +104,13 @@
   <li><a href="/">博客首页</a></li>
   <li><a href="/blog/archives">博客列表</a></li>
   <li><a href="/blog/categories/ml/">机器学习</a></li>
+  <li><a href="/blog/categories/distributed/">分布式</a></li>
   <li><a href="/blog/categories/java/">Java</a></li>
   <li><a href="/blog/categories/python/">Python</a></li>
   <li><a href="/blog/categories/linux/">Linux</a></li>
   <li><a href="/blog/categories/math/">数学</a></li>
   <li><a href="/blog/categories/others/">其它</a></li>
+  <li><a href="/about/">关于</a></li>
 </ul>
 
 </nav>
@@ -70,6 +118,475 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/">Zookeeper-源码分析(二)——Server启动流程</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-11T22:59:00+08:00" pubdate data-updated="true">2013年10月11日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Zookeeper中，server的启动入口为类org.apache.zookeeper.server.quorum.QuorumPeerMain的main方法，由zkServer.sh脚本调用。其main方法的内容如下：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">QuorumPeerMain</span> <span class="n">main</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeerMain</span><span class="o">();</span>
+</span><span class='line'>        <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">main</span><span class="o">.</span><span class="na">initializeAndRun</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalArgumentException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Invalid arguments, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="n">USAGE</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">USAGE</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ConfigException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Invalid config, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Invalid config, exiting abnormally&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Unexpected exception, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>            <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Exiting normally&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在main方法，调用了类QuorumPeerMain的initializeAndRun方法做后续的处理，其源码如下：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">protected</span> <span class="kt">void</span> <span class="nf">initializeAndRun</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span>
+</span><span class='line'>        <span class="kd">throws</span> <span class="n">ConfigException</span><span class="o">,</span> <span class="n">IOException</span>
+</span><span class='line'>    <span class="o">{</span>
+</span><span class='line'>        <span class="n">QuorumPeerConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeerConfig</span><span class="o">();</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">config</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="c1">// Start and schedule the the purge task</span>
+</span><span class='line'>        <span class="n">DatadirCleanupManager</span> <span class="n">purgeMgr</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatadirCleanupManager</span><span class="o">(</span><span class="n">config</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">getDataDir</span><span class="o">(),</span> <span class="n">config</span><span class="o">.</span><span class="na">getDataLogDir</span><span class="o">(),</span> <span class="n">config</span>
+</span><span class='line'>                <span class="o">.</span><span class="na">getSnapRetainCount</span><span class="o">(),</span> <span class="n">config</span><span class="o">.</span><span class="na">getPurgeInterval</span><span class="o">());</span>
+</span><span class='line'>        <span class="n">purgeMgr</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">config</span><span class="o">.</span><span class="na">servers</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">runFromConfig</span><span class="o">(</span><span class="n">config</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Either no config or no quorum defined in config, running &quot;</span>
+</span><span class='line'>                    <span class="o">+</span> <span class="s">&quot; in standalone mode&quot;</span><span class="o">);</span>
+</span><span class='line'>            <span class="c1">// there is only server in the quorum -- run as standalone</span>
+</span><span class='line'>            <span class="n">ZooKeeperServerMain</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/">Zookeeper-源码分析(一)——简介</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-09T23:10:00+08:00" pubdate data-updated="true">2013年10月09日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Zookeeper是什么</h2>
+
+<p>Zookeeper是Hadoop的一个子项目，它是一个针对大型分布式系统的可靠协调系统，提供的功能包括：维护配置信息(maintaining configuration information)、名字服务(naming service)、分布式同步(distributed synchronization)、组服务(group services)等等，以上的服务经常应用在分布式系统当中。</p>
+
+<p>Zookeeper的目标是封装好复杂并易出错的关键服务，将简单易用的接口和性能高效、功能稳定的系统提供给用户，从而降低用户实现分布式系统的难度。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/">在Octopress中显示数学公式</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-18T23:17:00+08:00" pubdate data-updated="true">2013年09月18日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>由于个人对机器学习比较感兴趣，而机器学习的学习过程中会遇到非常多的数学公式，因此，写博客的过程中离不开公式的撰写。</p>
+
+<p>平时写博客是在Mou下进行的，而Mou是支持<a href="http://www.latex-project.org/"><strong>LaTeX</strong></a>的，因此，通过Mou写的公式在博客未发布前是可能预览的。但是博客发布，显示的却不是公式，而是一串字符串，在网上找了下，原来Octopress要支持数学公式是需要安装插件的，在网上找了找记下配置过程和大家分享。</p>
+
+<h3>安装kramdown</h3>
+
+<p>kramdown是什么，我这里就不多介绍了，有兴趣大家可以点击<a href="http://kramdown.rubyforge.org/"><strong>这里</strong></a>。
+通过以下命令安装kramdown包</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>gem install kramdown</span></code></pre></td></tr></table></div></figure>
+
+
+<p>待安装完成之后进入 <em>OCTOPRESS_PATH/source/_includes/custom/</em> 目录，<em>OCTOPRESS_PATH</em>是Octopress的根目录。在该目录下找到head.html文件，在该文件中添加以下内容：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c">&lt;!--</span> <span class="nx">mathjax</span> <span class="nx">config</span> <span class="nx">similar</span> <span class="nx">to</span> <span class="nx">math</span><span class="p">.</span><span class="nx">stackexchange</span> <span class="o">--&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>  <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class='line'>    <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$$$&#39;</span><span class="p">,</span><span class="s1">&#39;$$$&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;\\(&quot;</span><span class="p">,</span><span class="s2">&quot;\\)&quot;</span><span class="p">]</span> <span class="p">],</span>
+</span><span class='line'>      <span class="nx">processEscapes</span><span class="o">:</span> <span class="kc">true</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class='line'>      <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">skipTags</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;script&#39;</span><span class="p">,</span> <span class="s1">&#39;noscript&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">,</span> <span class="s1">&#39;textarea&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span><span class="p">]</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Queue</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">all</span> <span class="o">=</span> <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">getAllJax</span><span class="p">(),</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">for</span><span class="p">(</span><span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">all</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">all</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">SourceElement</span><span class="p">().</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">className</span> <span class="o">+=</span> <span class="s1">&#39; has-jax&#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span>
+</span><span class='line'>   <span class="nx">src</span><span class="o">=</span><span class="s2">&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot;</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>配置完成之后，就可以在Mou中使用LaTeX来撰写数学公式，并且发布后能够正常显示。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/09/18/linuxchang-yong-ming-ling-ji-jin/">Linux常用命令集锦</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-18T22:54:00+08:00" pubdate data-updated="true">2013年09月18日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>说明</h2>
+
+<p>本文主要把工作中和学习中遇到的一些常用的linux命令进行了整理，方便今后查阅，以节省时间，时间就是Money啊，哈哈……</p>
+
+<h2>1. tail</h2>
+
+<h3>作用</h3>
+
+<p>该命令从指定的行开始将文件写到标准输出。使用tail命令的<strong>-f</strong>选项可以方便的查阅正在改变的日志文件，tail -f filename会把filename里最尾部的内容显示在屏幕上，并且不但刷新，使你看到最新的文件内容。</p>
+
+<h3>语法</h3>
+
+<p>tail [  -f ] [  -c Number |  -n Number |  -m Number |  -b Number |  -k Number ] [ File ]</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/09/08/emsuan-fa/">EM算法</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-08T20:30:00+08:00" pubdate data-updated="true">2013年09月08日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>1 简介</h2>
+
+<p>一直对EM算法有一种莫明的喜欢感，觉得它非常的神奇，其思想也非常的让人深思，给我的感觉就是一种美。</p>
+
+<p>EM算法是最大期望算法(Exception-maximization algorithm)的简称。它是一种迭代算法，用于求含有隐变量的概率模型参数的极大似然估计。</p>
+
+<p>EM算法经过两个步骤交替进行计算，从而求得概率模型的极大似然估计：</p>
+
+<ol>
+<li><p>第一步计算期望，也就是E，利用对隐变量的现在估计值，计算模型的极大似然估计值。</p></li>
+<li><p>第二步是最大化过程，也就是M。该过程在第一步基础上计算模型到达极大值时参数的值。</p></li>
+</ol>
+
+
+<h2>2 EM算法的推导</h2>
+
+<h4>2.1 算法的引入</h4>
+
+<p>假设我们记n个观测样本为
+\[x_1,x_2,x_3,…,x_k,…,x_n\]
+<strong>注意:</strong>一般我们假设各样本之间满足独立同分布(independent and identically distributed, i.i.d)。</p>
+
+<p>观测样本即为观测变量，可将所有的观测变量记为<strong>X</strong>。相应的，观测变量对应的隐变量为
+\[z_1,z_2,z_3,…,z_k,…z_n\]
+同样的，假设隐变量之间满足独立同分布，记所有的隐变量为<strong>Z</strong>。观测变量与隐变量的联合分布为 <strong>$$ P(X,Z |\theta )$$</strong></p>
+
+<p>其中， $$$\theta$$$是模型的参数。</p>
+
+<p>一般地，我们可以将观测变量X称为不完全数据，将(X,Z)称为完全数据(complete-data)。我们的目标是最大化$$$P(X|\theta)$$$，而
+\[P(X|\theta)= \sum_{Z}P(X,Z|\theta) \]</p>
+
+<p>假设Z是离散的（如果Z是连续的，可以用积分代替求和）。</p>
+
+<p>在最大化$$$P(X|\theta)$$$的时候，如果不存在隐变量，我们可以直接通过最大似然估计求解模型的参数$$$\theta$$$，由于隐变量Z的存在，求解模型参数的最优值就变得比较困难了。但是求解完全数据的最大似然函数$$$P(X,Z|\theta)$$$的最优解是比较容易的。</p>
+
+<h4>2.2 算法的推导</h4>
+
+<p>从2.1节我们已经知道，我们的目标是最大化$$$P(X|\theta)$$$，而我们可以做如下的一些推导。
+\[ P(X|\theta)={P(X,Z|\theta) \over P(Z|X,\theta) }\]
+两边取对数
+\[ \ln P(X|\theta)=\ln {P(X,Z|\theta) \over P(Z|X,\theta)}\]
+即可得到
+\[ \ln P(X|\theta)=\ln P(X,Z|\theta)  - \ln P(Z|X,\theta)\]
+假设有分布$$$\ln q(Z)$$$，则有
+\[ \ln P(X|\theta)=\ln P(X,Z|\theta)  - \ln q(Z) + \ln q(Z) - \ln P(Z|X,\theta)\]</p>
+
+<p>\[ \ln P(X|\theta)=(\ln P(X,Z|\theta) - \ln q(Z)) - (\ln P(Z|X,\theta)-\ln q(Z))\]</p>
+
+<p>\[ \ln P(X|\theta)={\ln {P(X,Z|\theta) \over q(Z)}} - {\ln {P(Z|X,\theta) \over q(Z)}}\]
+等式两边同乘以$$$q(Z)$$$，并对Z求积分(Z是连续随机变量)或者求和(Z是离散随机变量)，假设Z是连接的，则有
+\[ \int_{Z} q(Z)\ln P(X|\theta) \,dZ = \int_{Z}q(Z)({\ln {P(X,Z|\theta) \over q(Z)}} - {\ln {P(Z|X,\theta) \over q(Z)}})\,dZ \]</p>
+
+<p>\[ \int_{Z} q(Z)\ln P(X|\theta) \,dZ = {\int_{Z}q(Z){\ln {P(X,Z|\theta) \over q(Z)}}\,dZ} - {\int_{Z}q(Z)\ln {P(Z|X,\theta) \over q(Z)}}\,dZ \]</p>
+
+<p>\[ \int_{Z} q(Z)\ln P(X|\theta) \,dZ = {\int_{Z}q(Z){\ln {P(X,Z|\theta) \over q(Z)}}\,dZ} + {\int_{Z}q(Z)\ln {q(Z) \over P(Z|X,\theta)}}\,dZ \]</p>
+
+<p>由于Z和X之间相互独立，因此有
+\[ \int_{Z}q(Z)\ln P(X|\theta)\,dZ = \int_{Z}q(Z)\,dZ \ln(X|\theta) \]
+而$$$\int_{Z}q(Z)\,dZ = 1$$$，因此有 $$$\int_{Z}q(Z)q(Z)\ln P(X|\theta)\,dZ = ln(X|\theta)$$$，则有
+\[ \ln P(X|\theta) = {\int_{Z}q(Z){\ln {P(X,Z|\theta) \over q(Z)}}\,dZ} + {\int_{Z}q(Z)\ln {q(Z) \over P(Z|X,\theta)}}\,dZ \]
+记
+\[ \zeta(q,\theta)={\int_{Z}q(Z){\ln {P(X,Z|\theta) \over q(Z)}}\,dZ}\]</p>
+
+<p>\[ KL(q||p) = {\int_{Z}q(Z)\ln {q(Z) \over P(Z|X,\theta)}}\,dZ\]
+KL是KL距离，也就是Kullback-Leibler差异（Kullback-Leibler Divergence）的简称，也叫做相对熵（Relative Entropy）。它衡量的是相同事件空间里的两个概率分布的差异情况。其物理意义是：在相同事件空间里，概率分布P(x)的事件空间，若用概率分布Q(x)编码时，平均每个基本事件（符号）编码长度增加了多少比特。KL的一个重要性质是 $$$KL(P|Q)\ge0$$$，当且仅当$$$P=Q$$$时，等号成立。</p>
+
+<p>则有\[ \ln P(X|\theta) = \zeta(q,\theta) + KL(q||p) \]</p>
+
+<p>由于\[ KL(q||p) \ge 0 \]
+则有\[ \ln P(X|\theta) \ge \zeta(q,\theta) \]
+也就是说$$$\zeta(q,\theta)$$$是$$$\ln P(X|\theta)$$$的下界。</p>
+
+<p>EM算法可以通过不断提高下界$$$\zeta(q,\theta)$$$的值来逼近$$$\ln P(X|\theta)$$$的最大值，因此EM算法分为以下两步通过迭代的方法求$$$\ln P(X|\theta)$$$的最大似然估计值：</p>
+
+<ol>
+<li>在E步中，假设当前的参数为$$$\theta ^{old}$$$，并固定参数$$$\theta ^{old}$$$不变，则最大化下界$$$\zeta(q,\theta ^{old})$$$与$$$q(Z)$$$有关，并且$$$\ln P(X|\theta ^{old})$$$与$$$q(Z)$$$不相关，因此，要使$$$\zeta(q,\theta)$$$最大，等价于使$$$KL(q||p)$$$最小，由KL距离的性质可知 $$$q(Z)=P(Z|X,\theta ^{old})$$$</li>
+<li>在M步中，固定$$$q(Z)$$$，最大化下界$$$\zeta(q,\theta)$$$与$$$\theta$$$有关，即寻找一个新的值$$$\theta ^{new}$$$使得$$$\zeta(q,\theta ^{new})$$$最大。$$$\theta ^{new}$$$会使下界$$$\zeta(q,\theta)$$$的值增大（除非已经达到最大值），并且也一定会使似然函数的值增大，因为在M步中，分布q(Z)使用的是参数$$$\theta ^{old}$$$而不是参数$$$\theta ^{new}$$$，则$$$q(Z)\ne P(Z|X,\theta ^{new}) $$$，从而$$$KL(q||p)> 0$$$，因此，似然函数增大部分的值比仅提高下界多带来的增幅大，从而能够逼近$$$\ln P(X|\theta)$$$的最大似然估计。</li>
+</ol>
+
+
+<p>在最大化$$$\zeta(q,\theta)$$$的过程中，由 $$$q(Z)=P(Z|X,\theta ^{old})$$$ 可知
+\[ \zeta(q,\theta)={\int_{Z}P(Z|X,\theta ^{old}){\ln {P(X,Z|\theta) \over P(Z|X,\theta ^{old})}}\,dZ}\]
+\[ \zeta(q,\theta)={\int_{Z}P(Z|X,\theta ^{old})\ln P(X,Z|\theta)}\,dZ - {\int_{Z}P(Z|X,\theta ^{old})\ln P(Z|X,\theta ^{old})}\,dZ\]
+由于$$${\int_{Z}P(Z|X,\theta ^{old})\ln P(Z|X,\theta ^{old})}\,dZ$$$为常数，则有
+\[ \zeta(q,\theta)={\int_{Z}P(Z|X,\theta ^{old})\ln P(X,Z|\theta)}\,dZ + const \]
+因此最大化$$$\zeta(q,\theta)$$$等价于最大化$$${\int_{Z}P(Z|X,\theta ^{old})\ln P(X,Z|\theta)}\,dZ$$$</p>
+
+<h2>3 说明</h2>
+
+<p>关于EM算法，作以下几点说明：</p>
+
+<ol>
+<li>参数的初始值可以任意选择，但需要注意的是EM算法对参数的初值是敏感的。</li>
+<li>EM算法中，E步是就函数$$${\int_{Z}P(Z|X,\theta ^{old})\ln P(X,Z|\theta)}\,dZ$$$，我们可以定义Q函数 \[ Q(\theta,\theta ^{k}) = {\int_{Z}P(Z|X,\theta ^{k})\ln P(X,Z|\theta)}\,dZ\] 表示完全数据的对数似然函数$$$\ln P(Y,Z|\theta)$$$关于给定观测数据$$$Y$$$和给定参数$$$$\theta ^{k}$$$的条件下对未观测数据$$$Z$$$的条件概率分布$$$P(Z|X,\theta ^{k})$$$的期望，因此，Q函数也可以写成如下形式\[ Q(\theta,\theta ^{k}) = E_{Z}[\ln P(X,Z|\theta)|X,\theta ^{k}]\] 变元$$$\theta$$$表示需要极大化的参数，变元$$$\theta ^{k}$$$表示参数当前的估计值。</li>
+<li>EM算法中，M步是在求$$$Q(\theta,\theta ^{k})$$$的极大化，完成一次迭代$$$\theta ^{k} \rightarrow\theta ^{k+1}$$$。</li>
+<li>EM算法迭代的停止条件一般为，给定较小的正数$$$\varepsilon _{1},\varepsilon _{2}$$$，若满足 \[\parallel \theta ^{k+1} - \theta ^{k} \parallel &lt; \varepsilon _{1}\] 或 \[\parallel Q(\theta ^{k+1},\theta ^{k}) - Q(\theta ^{k},\theta ^{k}) \parallel &lt; \varepsilon_{2}\] 则停止迭代。每次迭代其实是在求Q函数及其极大化。</li>
+</ol>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -190,7 +707,8 @@ Good luck!</p>
   
   <div class="pagination">
     
-    <a href="/blog/archives">Blog Archives</a>
+    
+     <a href="/blog/archives">查看博客列表</a> 
     
   </div>
 </div>
@@ -200,7 +718,10 @@ Good luck!</p>
 <section>
 <h1>博客分类</h1>
 <ul>
-  <li><a href='/blog/categories/others/'>其它 (2)</a></li>
+  <li><a href='/blog/categories/linux/'>Linux (1)</a></li>
+  <li><a href='/blog/categories/others/'>其它 (3)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (2)</a></li>
+  <li><a href='/blog/categories/ml/'>机器学习 (1)</a></li>
 </ul>
 </section>
 
@@ -209,11 +730,23 @@ Good luck!</p>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/09/05/octopressde-an-zhuang-yu-pei-zhi/">Octopress的安装与配置</a>
+        <a href="/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/">Zookeeper-源码分析(二)——Server启动流程</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/12/17/hello-octopress/">Hello Octopress</a>
+        <a href="/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/">Zookeeper-源码分析(一)——简介</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/">在Octopress中显示数学公式</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/18/linuxchang-yong-ming-ling-ji-jin/">linux常用命令集锦</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/08/emsuan-fa/">EM算法</a>
       </li>
     
   </ul>

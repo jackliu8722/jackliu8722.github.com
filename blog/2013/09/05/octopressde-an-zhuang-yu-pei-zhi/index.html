@@ -29,6 +29,38 @@
 <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$$$','$$$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
   
 
 </head>
@@ -58,11 +90,13 @@
   <li><a href="/">博客首页</a></li>
   <li><a href="/blog/archives">博客列表</a></li>
   <li><a href="/blog/categories/ml/">机器学习</a></li>
+  <li><a href="/blog/categories/distributed/">分布式</a></li>
   <li><a href="/blog/categories/java/">Java</a></li>
   <li><a href="/blog/categories/python/">Python</a></li>
   <li><a href="/blog/categories/linux/">Linux</a></li>
   <li><a href="/blog/categories/math/">数学</a></li>
   <li><a href="/blog/categories/others/">其它</a></li>
+  <li><a href="/about/">关于</a></li>
 </ul>
 
 </nav>
@@ -184,6 +218,8 @@ var jiathis_config = {data_track_clickback:'true'};
         <a class="basic-alignment left" href="/blog/2012/12/17/hello-octopress/" title="Previous Post: Hello Octopress">&laquo; Hello Octopress</a>
       
       
+        <a class="basic-alignment right" href="/blog/2013/09/08/emsuan-fa/" title="Next Post: EM算法">EM算法 &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -196,7 +232,10 @@ var jiathis_config = {data_track_clickback:'true'};
 <section>
 <h1>博客分类</h1>
 <ul>
-  <li><a href='/blog/categories/others/'>其它 (2)</a></li>
+  <li><a href='/blog/categories/linux/'>Linux (1)</a></li>
+  <li><a href='/blog/categories/others/'>其它 (3)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (2)</a></li>
+  <li><a href='/blog/categories/ml/'>机器学习 (1)</a></li>
 </ul>
 </section>
 
@@ -205,11 +244,23 @@ var jiathis_config = {data_track_clickback:'true'};
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/09/05/octopressde-an-zhuang-yu-pei-zhi/">Octopress的安装与配置</a>
+        <a href="/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/">Zookeeper-源码分析(二)——Server启动流程</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/12/17/hello-octopress/">Hello Octopress</a>
+        <a href="/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/">Zookeeper-源码分析(一)——简介</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/">在Octopress中显示数学公式</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/18/linuxchang-yong-ming-ling-ji-jin/">linux常用命令集锦</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/08/emsuan-fa/">EM算法</a>
       </li>
     
   </ul>
