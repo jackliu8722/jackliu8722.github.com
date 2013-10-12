@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: 分布式 | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/distributed/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2013-10-12T22:14:36+08:00</updated>
+  <updated>2013-10-12T22:35:34+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -18,11 +18,13 @@
     <link href="http://jackliu8722.github.com/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/"/>
     <updated>2013-10-11T22:59:00+08:00</updated>
     <id>http://jackliu8722.github.com/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng</id>
-    <content type="html"><![CDATA[<p>Zookeeper中，server的启动入口为类org.apache.zookeeper.server.quorum.QuorumPeerMain的main方法，由zkServer.sh脚本调用。其main方法的内容如下：
-{% codeblock lang:java %}
-  public static void main(String[] args) {</p>
+    <content type="html"><![CDATA[<p>Zookeeper中，server的启动入口为类org.apache.zookeeper.server.quorum.QuorumPeerMain的main方法，由zkServer.sh脚本调用。其main方法的内容如下：</p>
 
-<pre><code>    QuorumPeerMain main = new QuorumPeerMain();
+<p>{% codeblock lang:java %}</p>
+
+<pre><code>public static void main(String[] args) {
+
+    QuorumPeerMain main = new QuorumPeerMain();
     try {
         main.initializeAndRun(args);
     } catch (IllegalArgumentException e) {
@@ -49,24 +51,26 @@
 
 <p>{% codeblock lang:java %}</p>
 
-<p>protected void initializeAndRun(String[] args)</p>
-
-<pre><code>    throws ConfigException, IOException
+<pre><code>protected void initializeAndRun(String[] args)
+    throws ConfigException, IOException
 {    
+    //创建配置类
     QuorumPeerConfig config = new QuorumPeerConfig();
+    //如果只有一个参数，则调用配置类的parse方法解析配置文件
     if (args.length == 1) {
         config.parse(args[0]);
     }
 
-    // Start and schedule the the purge task
+    // 启动并调度清理任务，定时清理数据目录下的数据
     DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
             .getDataDir(), config.getDataLogDir(), config
             .getSnapRetainCount(), config.getPurgeInterval());
     purgeMgr.start();
-
+    //运行quorum模式
     if (args.length == 1 &amp;&amp; config.servers.size() &gt; 0) {
         runFromConfig(config);
     } else {
+        //无配置文件，或者服务的数量为0，运行standalone模式
         LOG.warn("Either no config or no quorum defined in config, running "
                 + " in standalone mode");
         // there is only server in the quorum -- run as standalone
@@ -76,6 +80,8 @@
 </code></pre>
 
 <p>{%endcodeblock%}</p>
+
+<p>在initializedAndRun方法中，zookeeper首先创建QuorumPeerConfig类解析配置文件，然后根据配置是否存在和server的数量选择运行的模式。如果无配置文件或者server的数量为1(即只有当前server)，则运行standalone模式，即代码中执行ZookeeperServerMain.main(args),否则以quorum模式运行。</p>
 ]]></content>
   </entry>
   
