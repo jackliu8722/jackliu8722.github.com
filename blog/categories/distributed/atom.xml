@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: 分布式 | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/distributed/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2013-10-12T22:35:34+08:00</updated>
+  <updated>2013-10-12T22:40:59+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -20,66 +20,125 @@
     <id>http://jackliu8722.github.com/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng</id>
     <content type="html"><![CDATA[<p>Zookeeper中，server的启动入口为类org.apache.zookeeper.server.quorum.QuorumPeerMain的main方法，由zkServer.sh脚本调用。其main方法的内容如下：</p>
 
-<p>{% codeblock lang:java %}</p>
-
-<pre><code>public static void main(String[] args) {
-
-    QuorumPeerMain main = new QuorumPeerMain();
-    try {
-        main.initializeAndRun(args);
-    } catch (IllegalArgumentException e) {
-        LOG.error("Invalid arguments, exiting abnormally", e);
-        LOG.info(USAGE);
-        System.err.println(USAGE);
-        System.exit(2);
-    } catch (ConfigException e) {
-        LOG.error("Invalid config, exiting abnormally", e);
-        System.err.println("Invalid config, exiting abnormally");
-        System.exit(2);
-    } catch (Exception e) {
-        LOG.error("Unexpected exception, exiting abnormally", e);
-        System.exit(1);
-    }
-    LOG.info("Exiting normally");
-    System.exit(0);
-}
-</code></pre>
-
-<p>{% endcodeblock%}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">QuorumPeerMain</span> <span class="n">main</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeerMain</span><span class="o">();</span>
+</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">main</span><span class="o">.</span><span class="na">initializeAndRun</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalArgumentException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Invalid arguments, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="n">USAGE</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">USAGE</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ConfigException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Invalid config, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Invalid config, exiting abnormally&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Unexpected exception, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Exiting normally&quot;</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>在main方法，调用了类QuorumPeerMain的initializeAndRun方法做后续的处理，其源码如下：</p>
 
-<p>{% codeblock lang:java %}</p>
-
-<pre><code>protected void initializeAndRun(String[] args)
-    throws ConfigException, IOException
-{    
-    //创建配置类
-    QuorumPeerConfig config = new QuorumPeerConfig();
-    //如果只有一个参数，则调用配置类的parse方法解析配置文件
-    if (args.length == 1) {
-        config.parse(args[0]);
-    }
-
-    // 启动并调度清理任务，定时清理数据目录下的数据
-    DatadirCleanupManager purgeMgr = new DatadirCleanupManager(config
-            .getDataDir(), config.getDataLogDir(), config
-            .getSnapRetainCount(), config.getPurgeInterval());
-    purgeMgr.start();
-    //运行quorum模式
-    if (args.length == 1 &amp;&amp; config.servers.size() &gt; 0) {
-        runFromConfig(config);
-    } else {
-        //无配置文件，或者服务的数量为0，运行standalone模式
-        LOG.warn("Either no config or no quorum defined in config, running "
-                + " in standalone mode");
-        // there is only server in the quorum -- run as standalone
-        ZooKeeperServerMain.main(args);
-    }
-}
-</code></pre>
-
-<p>{%endcodeblock%}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">protected</span> <span class="kt">void</span> <span class="n">initializeAndRun</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span>
+</span><span class='line'>    <span class="kd">throws</span> <span class="n">ConfigException</span><span class="o">,</span> <span class="n">IOException</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>    <span class="c1">//创建配置类</span>
+</span><span class='line'>    <span class="n">QuorumPeerConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeerConfig</span><span class="o">();</span>
+</span><span class='line'>    <span class="c1">//如果只有一个参数，则调用配置类的parse方法解析配置文件</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">config</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="c1">// 启动并调度清理任务，定时清理数据目录下的数据</span>
+</span><span class='line'>    <span class="n">DatadirCleanupManager</span> <span class="n">purgeMgr</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatadirCleanupManager</span><span class="o">(</span><span class="n">config</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">getDataDir</span><span class="o">(),</span> <span class="n">config</span><span class="o">.</span><span class="na">getDataLogDir</span><span class="o">(),</span> <span class="n">config</span>
+</span><span class='line'>            <span class="o">.</span><span class="na">getSnapRetainCount</span><span class="o">(),</span> <span class="n">config</span><span class="o">.</span><span class="na">getPurgeInterval</span><span class="o">());</span>
+</span><span class='line'>    <span class="n">purgeMgr</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span><span class='line'>    <span class="c1">//运行quorum模式</span>
+</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;&amp;</span><span class="n">amp</span><span class="o">;</span> <span class="n">config</span><span class="o">.</span><span class="na">servers</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">runFromConfig</span><span class="o">(</span><span class="n">config</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>        <span class="c1">//无配置文件，或者服务的数量为0，运行standalone模式</span>
+</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Either no config or no quorum defined in config, running &quot;</span>
+</span><span class='line'>                <span class="o">+</span> <span class="s">&quot; in standalone mode&quot;</span><span class="o">);</span>
+</span><span class='line'>        <span class="c1">// there is only server in the quorum -- run as standalone</span>
+</span><span class='line'>        <span class="n">ZooKeeperServerMain</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>在initializedAndRun方法中，zookeeper首先创建QuorumPeerConfig类解析配置文件，然后根据配置是否存在和server的数量选择运行的模式。如果无配置文件或者server的数量为1(即只有当前server)，则运行standalone模式，即代码中执行ZookeeperServerMain.main(args),否则以quorum模式运行。</p>
 ]]></content>
