@@ -253,7 +253,104 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>在initializedAndRun方法中，zookeeper首先创建QuorumPeerConfig类解析配置文件，然后根据配置是否存在和server的数量选择运行的模式。如果无配置文件或者server的数量为1(即只有当前server)，则运行standalone模式，即代码中执行ZookeeperServerMain.main(args),否则以quorum模式运行。</p>
+<p>在initializedAndRun方法中，zookeeper首先创建QuorumPeerConfig类解析配置文件，然后根据配置是否存在和server的数量选择运行的模式。如果无配置文件或者server的数量为1(即只有当前server)，则运行standalone模式，即代码中执行ZookeeperServerMain.main(args),否则以quorum模式运行，即以QuorumPeerConfig的实例为参数运行runFromConfig函数，其代码如下：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">runFromConfig</span><span class="o">(</span><span class="n">QuorumPeerConfig</span> <span class="n">config</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>          <span class="n">ManagedUtil</span><span class="o">.</span><span class="na">registerLog4jMBeans</span><span class="o">();</span>
+</span><span class='line'>      <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">JMException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Unable to register log4j JMX control&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Starting quorum peer&quot;</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>          <span class="n">ServerCnxnFactory</span> <span class="n">cnxnFactory</span> <span class="o">=</span> <span class="n">ServerCnxnFactory</span><span class="o">.</span><span class="na">createFactory</span><span class="o">();</span>
+</span><span class='line'>          <span class="c1">//配置是客户端连接Zookeeper服务器的端口，以及最大连接数</span>
+</span><span class='line'>          <span class="n">cnxnFactory</span><span class="o">.</span><span class="na">configure</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getClientPortAddress</span><span class="o">(),</span>
+</span><span class='line'>                                <span class="n">config</span><span class="o">.</span><span class="na">getMaxClientCnxns</span><span class="o">());</span>
+</span><span class='line'>          <span class="c1">//创建管理quorum协议的QuorumPeer类</span>
+</span><span class='line'>          <span class="n">quorumPeer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeer</span><span class="o">();</span>
+</span><span class='line'>          <span class="c1">//设置客户端连接Zookeeper服务器的端口，Zookeeper会监听这个端口，接受客户端的访问请求</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setClientPortAddress</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getClientPortAddress</span><span class="o">());</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setTxnFactory</span><span class="o">(</span><span class="k">new</span> <span class="n">FileTxnSnapLog</span><span class="o">(</span>
+</span><span class='line'>                      <span class="k">new</span> <span class="nf">File</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getDataLogDir</span><span class="o">()),</span>
+</span><span class='line'>                      <span class="k">new</span> <span class="nf">File</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getDataDir</span><span class="o">())));</span>
+</span><span class='line'>          <span class="c1">//设置集群中的其它zookeeper</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setQuorumPeers</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getServers</span><span class="o">());</span>
+</span><span class='line'>          <span class="c1">//设置选举算法</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setElectionType</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getElectionAlg</span><span class="o">());</span>
+</span><span class='line'>          <span class="c1">//设置server ID</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setMyid</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getServerId</span><span class="o">());</span>
+</span><span class='line'>          <span class="c1">//这个时间是作为Zookeeper服务器之间或客户端与服务器之间维持心跳的时间间隔，也就是每个 tickTime 时间就会发送一个心跳。</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setTickTime</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getTickTime</span><span class="o">());</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setMinSessionTimeout</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getMinSessionTimeout</span><span class="o">());</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setMaxSessionTimeout</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getMaxSessionTimeout</span><span class="o">());</span>
+</span><span class='line'>          <span class="c1">//initLimit配置项是用来配置 Zookeeper 接受客户端（这里所说的客户端不是用户连接 Zookeeper 服务器的客户端，而是 Zookeeper 服务器集群中连接到 Leader 的 Follower 服务器）初始化连接时最长能忍受多少个心跳时间间隔数。当已经超过 10 个心跳的时间（也就是 tickTime）长度后 Zookeeper 服务器还没有收到客户端的返回信息，那么表明这个客户端连接失败。总的时间长度就是 5*2000=10 秒</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setInitLimit</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getInitLimit</span><span class="o">());</span>
+</span><span class='line'>          <span class="c1">//syncLimit配置项标识 Leader 与 Follower 之间发送消息，请求和应答时间长度，最长不能超过多少个 tickTime 的时间长度，总的时间长度就是 2*2000=4 秒</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setSyncLimit</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getSyncLimit</span><span class="o">());</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setQuorumVerifier</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getQuorumVerifier</span><span class="o">());</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setCnxnFactory</span><span class="o">(</span><span class="n">cnxnFactory</span><span class="o">);</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setZKDatabase</span><span class="o">(</span><span class="k">new</span> <span class="n">ZKDatabase</span><span class="o">(</span><span class="n">quorumPeer</span><span class="o">.</span><span class="na">getTxnFactory</span><span class="o">()));</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setLearnerType</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getPeerType</span><span class="o">());</span>
+</span><span class='line'>          <span class="c1">//实现了Runable接口的start方法，启动线程。</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
+</span><span class='line'>          <span class="n">quorumPeer</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
+</span><span class='line'>      <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="c1">// warn, but generally this is ok</span>
+</span><span class='line'>          <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Quorum Peer interrupted&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>runFromConfig的执行流程已经在以上代码说明了，下面主要对quorum的start方法进行分析。</p>
 </div>
   
   
