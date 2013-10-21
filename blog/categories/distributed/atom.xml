@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: 分布式 | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/distributed/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2013-10-14T14:21:05+08:00</updated>
+  <updated>2013-10-21T21:25:18+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -14,10 +14,70 @@
 
   
   <entry>
+    <title type="html"><![CDATA[ICE Chat Demo(中文翻译)]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/10/20/ice-chat-demo/"/>
+    <updated>2013-10-20T10:36:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/10/20/ice-chat-demo</id>
+    <content type="html"><![CDATA[<h3>简介</h3>
+
+<p>ZeroC提供了一个简单的应用，该应用允许用户接入一个聊天室，并且与其它用户进行聊天。此聊天应用提出了一些有趣的设计，这些设计在开发一个分布式应用时，可能会成为我们面临的挑战，因此它是一个极好的案例研究。</p>
+
+<p>聊天应用使用C++实现了服务端，客户端可以使用不同的语言，图形化程序使用C#, Java和C++，控制台程序使用C++实现，而基于web的客户端程序使用Java(applet), PHP和ActionScript.应用程序的各个组成部分由下图所示，我们将在后面的章节中对这些组件进行详细地探讨。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-01.png"></p>
+
+<p>ZeroC提供了一个公共的聊天服务器，你可以通过以下几种方式使用它：</p>
+
+<ul>
+<li>通过浏览器使用PHP, Silverlight, Applet或者Flash客户端进行聊天。</li>
+<li>下载编译好的Java或者.Net图形客户端。</li>
+<li>使用ICE支持的语言自己实现一个客户端。</li>
+</ul>
+
+
+<p>如果你愿意，也可以下载完整的应用程序源代码，并在自己的系统上运行。</p>
+
+<p>点击下面的链接继续阅读我们的聊天应用程序的介绍。如果对更详细的讨论感兴趣，请参阅更详细的<a href="http://www.zeroc.com/chat/articles.html">技术文章</a>。</p>
+
+<h3>内容</h3>
+
+<h5>ICE是什么</h5>
+
+<p>ICE（Internet Communications Engine）是一个分布式计算平台。它支持多种操作系统，编译器和编程语言，并允许你创建异构的分布式应用程序。换句话说，ICE让您轻松地创建分布式应用程序，并且可以运行在不同的操作系统上，同时可以用不同的语言编写，ICE允许这些应用程序无缝地进行交互，如下图所示。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-02.png"></p>
+
+<h5>Slice</h5>
+
+<p>无论开发者使用什么语言来实现应用程序，一种称为Slice的规范语言可以为应用程序定义类和接口。然后，编译器将这种独立于语言的规范转换成特定语言的API。生成的API考虑到了许多通信细节，而这些通信细节实现起来往往是比较困难的，否则需要开发者自己去实现。下图显示了一个典型的ICE应用的C++工具链。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-03.png"></p>
+
+<h5>客户端和服务端</h5>
+
+<p>在其它的分布式系统中，ICE应用由客户端和服务端组成，并共同完成任务。术语客户端和服务端不是应用程序特定部分的固定设计模式，相反，它们表示应用程序请求的角色。</p>
+
+<ul>
+<li>客户端是主动的实体，发送服务请求到服务器。</li>
+<li>服务是被动的实体，响应客户端的请求并提供服务。</li>
+</ul>
+
+
+<p>从理论上来讲，一个服务器只响应请求，但不发送请求。同样地，一个客户端只发送请求但不提供服务，如下图所示。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-04.png"></p>
+
+<p>作为一个客户端和服务器程序，这是很常见的。例如，客户端可能在服务器上启动一个长时间运行的操作，作为启动操作的一部分，客户端可以向服务器提供一个回调操作，当启动操作完成后，服务器可以通过回调通知客户端，在此情况下，当客户端执行启动操作时，客户端充当客户端的角色，而当服务器通知操作完成时，客户端又充当服务器的角色，如下图所示。因此，通常将客户端-服务器系统描述为对等系统更为准确。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-05.png"></p>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Zookeeper-源码分析(二)——Server启动流程]]></title>
-    <link href="http://jackliu8722.github.com/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/"/>
-    <updated>2013-10-11T22:59:00+08:00</updated>
-    <id>http://jackliu8722.github.com/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng</id>
+    <link href="http://jackliu8722.github.com/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/"/>
+    <updated>2013-10-16T08:23:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng</id>
     <content type="html"><![CDATA[<p>Zookeeper中，server的启动入口为类org.apache.zookeeper.server.quorum.QuorumPeerMain的main方法，由zkServer.sh脚本调用。其main方法的内容如下：</p>
 
 <p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>

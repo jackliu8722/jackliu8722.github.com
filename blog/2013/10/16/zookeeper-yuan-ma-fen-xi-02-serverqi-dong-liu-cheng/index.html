@@ -32,7 +32,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jackliu8722.github.com/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/">
+  <link rel="canonical" href="http://jackliu8722.github.com/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -137,7 +137,7 @@
   
 
 
-<time datetime="2013-10-11T22:59:00+08:00" pubdate data-updated="true">2013年10月11日</time>
+<time datetime="2013-10-16T08:23:00+08:00" pubdate data-updated="true">2013年10月16日</time>
         
       </p>
     
@@ -168,7 +168,8 @@
 <span class='line-number'>20</span>
 <span class='line-number'>21</span>
 <span class='line-number'>22</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
 </span><span class='line'>
 </span><span class='line'>        <span class="n">QuorumPeerMain</span> <span class="n">main</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeerMain</span><span class="o">();</span>
 </span><span class='line'>        <span class="k">try</span> <span class="o">{</span>
@@ -189,7 +190,6 @@
 </span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Exiting normally&quot;</span><span class="o">);</span>
 </span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
 </span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -221,7 +221,9 @@
 <span class='line-number'>24</span>
 <span class='line-number'>25</span>
 <span class='line-number'>26</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">initializeAndRun</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>
+</span><span class='line'>    <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">initializeAndRun</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span>
 </span><span class='line'>        <span class="kd">throws</span> <span class="n">ConfigException</span><span class="o">,</span> <span class="n">IOException</span>
 </span><span class='line'>    <span class="o">{</span>
 </span><span class='line'>        <span class="c1">//创建配置类</span>
@@ -298,7 +300,9 @@
 <span class='line-number'>44</span>
 <span class='line-number'>45</span>
 <span class='line-number'>46</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">runFromConfig</span><span class="o">(</span><span class="n">QuorumPeerConfig</span> <span class="n">config</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+<span class='line-number'>47</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">runFromConfig</span><span class="o">(</span><span class="n">QuorumPeerConfig</span> <span class="n">config</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
 </span><span class='line'>      <span class="k">try</span> <span class="o">{</span>
 </span><span class='line'>          <span class="n">ManagedUtil</span><span class="o">.</span><span class="na">registerLog4jMBeans</span><span class="o">();</span>
 </span><span class='line'>      <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">JMException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
@@ -370,7 +374,7 @@
   
 
 
-<time datetime="2013-10-11T22:59:00+08:00" pubdate data-updated="true">2013年10月11日</time>
+<time datetime="2013-10-16T08:23:00+08:00" pubdate data-updated="true">2013年10月16日</time>
       
 
 <span class="categories">
@@ -417,8 +421,10 @@ var jiathis_config = {data_track_clickback:'true'};
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/" title="Previous Post: Zookeeper-源码分析(一)——简介">&laquo; Zookeeper-源码分析(一)——简介</a>
+        <a class="basic-alignment left" href="/blog/2013/10/16/pca/" title="Previous Post: 主成份分析(PCA)">&laquo; 主成份分析(PCA)</a>
       
+      
+        <a class="basic-alignment right" href="/blog/2013/10/20/ice-chat-demo/" title="Next Post: ICE Chat Demo(中文翻译)">ICE Chat Demo(中文翻译) &raquo;</a>
       
     </p>
   </footer>
@@ -434,8 +440,8 @@ var jiathis_config = {data_track_clickback:'true'};
 <ul>
   <li><a href='/blog/categories/linux/'>Linux (1)</a></li>
   <li><a href='/blog/categories/others/'>其它 (3)</a></li>
-  <li><a href='/blog/categories/distributed/'>分布式 (2)</a></li>
-  <li><a href='/blog/categories/ml/'>机器学习 (1)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (3)</a></li>
+  <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
 </ul>
 </section>
 
@@ -444,7 +450,15 @@ var jiathis_config = {data_track_clickback:'true'};
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/10/11/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/">Zookeeper-源码分析(二)——Server启动流程</a>
+        <a href="/blog/2013/10/20/ice-chat-demo/">ICE Chat Demo(中文翻译)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/">Zookeeper-源码分析(二)——Server启动流程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/16/pca/">主成份分析(PCA)</a>
       </li>
     
       <li class="post">
@@ -453,14 +467,6 @@ var jiathis_config = {data_track_clickback:'true'};
     
       <li class="post">
         <a href="/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/">在Octopress中显示数学公式</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/18/linuxchang-yong-ming-ling-ji-jin/">linux常用命令集锦</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/08/emsuan-fa/">EM算法</a>
       </li>
     
   </ul>

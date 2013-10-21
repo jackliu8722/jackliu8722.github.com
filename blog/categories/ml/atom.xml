@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: 机器学习 | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/ml/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2013-10-14T14:21:05+08:00</updated>
+  <updated>2013-10-21T21:25:18+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -12,6 +12,19 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[主成份分析(PCA)]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/10/16/pca/"/>
+    <updated>2013-10-16T08:19:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/10/16/pca</id>
+    <content type="html"><![CDATA[<p>主成份分析（Principal components analysis，PCA）是一种分析、简化数据集的技术。PCA在应用中使用得非常广泛，比如：降维、有损数据压缩、特征提取以及数据可视化。</p>
+
+<p>对PCA的定义有两种常用的方法，但是最终都产生了相同的算法。第一种定义为将一个高维的数据次投影到低维的线性空间上，这样的低维空间被称为主体子空间，投影后，使数据的方差最大化，该定义可称为最大方差理论。等价地，</p>
+
+<h3>最大方差理论</h3>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[EM算法]]></title>
