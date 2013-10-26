@@ -1,0 +1,45 @@
+---
+layout: post
+title: "主成份分析(PCA)"
+date: 2013-10-16 08:19
+comments: true
+categories: 机器学习{ml}
+---
+主成份分析（Principal components analysis，PCA）是一种分析、简化数据集的技术。PCA在应用中使用得非常广泛，比如：降维、有损数据压缩、特征提取以及数据可视化。
+
+对PCA的定义有两种常用的方法，但是最终都产生了相同的算法。第一种定义为将一个高维的数据投影到低维的线性空间上，这样的低维空间被称为主体子空间，投影后，使数据的方差最大化，该定义可称为最大方差理论。等价地，
+
+###最大方差理论
+假设有一个样本数据集{$$$x\_{n}$$$}，其中n=1,……,N，$$$x\_{n}$$$为欧几时德空间中维度为D的变量。我们的目的是将数据投影到维数为M的空间上，并且使投影后数据的方差最大，其中$$$D<M$$$。就目前而言，假设M的值是已知的，在后面，我们将通过数据集以确定一个合适的M值。
+
+首先，我们考虑将数据投影到一个一维空间上，即M=1。定义该空间的方向向量用D维向量$$$u_1$$$表示，为了方便起见，我们应该选择一个单位向量以定义空间的方法，因此$$$u_1$$$应该满足 $$$ u_1 ^{T}u_1=1 $$$。我们只关心$$$u_1$$$所决定的方向，而不关心$$$u_1$$$本身。数据集中的每个数据$$$x_n$$$投影后得到一个标量$$$x_1 ^Tx_n$$$，投影后数据的均值为$$$u_1 ^T\bar{x}$$$，其中$$$\bar{x}$$$为样本数据的均值，由以下式子得到。\\[\bar{x}={1 \over N}\sum_{n=1} ^Nx_n\\]
+投影后数据的均方差为\\[ \bar{V} = {1 \over N} \sum\_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) ^2\\]
+
+\\[\Rightarrow \bar{V} = {1 \over N} \sum\_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) (u_1 ^T x_n - u_1 ^T \bar{x}) ^T\\]
+
+\\[\Rightarrow \bar{V} = {1 \over N} \sum\_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) (x_n ^T u_1 - \bar{x} ^T u_1)\\]
+
+\\[\Rightarrow \quad  \bar{V} = {1 \over N} \sum\_{n=1} ^N u_1 ^T(x_n - \bar{x}) (x_n  - \bar{x}) ^Tu_1  \\]
+
+\\[\Rightarrow \quad \bar{V} = u_1 ^T{1 \over N} \sum\_{n=1} ^N (x_n - \bar{x}) (x_n - \bar{x}) ^Tu_1  \\]
+
+令
+
+\\[ S = {1 \over N} \sum\_{n=1} ^N (x_n - \bar{x}) (x_n - \bar{x}) ^T  \\]
+
+因此，投影后数据的方差可以写成如下形式
+\\[ \bar{V} = {1 \over N} \sum\_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) ^2 = u_1 ^T S u_1\\]
+
+现在我们寻找一个合适的向量$$$u_1$$$使用方差$$$u_1 ^T $u_1$$$最大。显示，这是一个带约束的最大化问题，我们可以选择$$$u_1 ^T u_1 = 1$$$作为约束条件，然后我们增加一个拉格朗日因子，得到一个不带约束条件的最大化问题
+\\[ L(u_1) = u_1 ^TSu_1 +\lambda\_1(1-u_1 ^T u_1)\\]
+对$$$L(u_1)$$$求关于$$$u_1$$$的导数，有
+
+\\[\frac{\partial L(u_1)}{\partial u_1} = 2Su_1 - 2\lambda\_1u_1\\]
+以上的求导过程会用到以下结论:
+\\[(1) \qquad \quad trABC=trCAB=trBCA\\]
+\\[(2) \qquad \qquad \qquad trA=trA ^T \qquad \\]
+\\[(3) \qquad tr(A+B)=trA +trB \qquad \\]
+\\[(4) \qquad \qquad \nabla \_AtrAB=B ^T \qquad \quad \\]
+\\[(5) \qquad \nabla \_{A ^T} f(A)=(\nabla \_Af(A)) ^T \qquad \\]
+\\[(6) \quad \nabla\_AtrABA ^TC= CAB+C ^TAB ^T\\]
+其中，A, B, C为矩阵。
