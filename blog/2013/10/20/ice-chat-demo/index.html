@@ -182,6 +182,14 @@
 <p>作为一个客户端和服务器程序，这是很常见的。例如，客户端可能在服务器上启动一个长时间运行的操作，作为启动操作的一部分，客户端可以向服务器提供一个回调操作，当启动操作完成后，服务器可以通过回调通知客户端，在此情况下，当客户端执行启动操作时，客户端充当客户端的角色，而当服务器通知操作完成时，客户端又充当服务器的角色，如下图所示。因此，通常将客户端-服务器系统描述为对等系统更为准确。</p>
 
 <p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-05.png"></p>
+
+<h5>对象和代理</h5>
+
+<p>一个ICE对象是对一个本地或者远程实体的抽象，并且可以响应客户端请求。它有一个唯一的标识和表示对象支持的一些已命名的操作的接口，这些对象可以支持更多的接口。客户端通过调用对象的方法向服务器发送请求。</p>
+
+<p>一个代理是客户端用来访问ICE对象的句柄。除了代理代表远程地址空间的一个对象以外，你可以认为代理类似于C++中的指针或者Java中的引用。当客户端调用代理的一个方法时，ICE运行环境需要小心地定位对象，如果有必要，启动服务器实例化对象，并且在客户端和服务器之间传递参数。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-06.png"></p>
 </div>
 
 
@@ -254,6 +262,8 @@ var jiathis_config = {data_track_clickback:'true'};
         <a class="basic-alignment left" href="/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/" title="Previous Post: Zookeeper-源码分析(二)——Server启动流程">&laquo; Zookeeper-源码分析(二)——Server启动流程</a>
       
       
+        <a class="basic-alignment right" href="/blog/2013/10/21/writing-an-ice-application-with-java/" title="Next Post: 用Java实现一个ICE应用">用Java实现一个ICE应用 &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -267,8 +277,9 @@ var jiathis_config = {data_track_clickback:'true'};
 <h1>博客分类</h1>
 <ul>
   <li><a href='/blog/categories/linux/'>Linux (1)</a></li>
+  <li><a href='/blog/categories/Python/'>Python (1)</a></li>
   <li><a href='/blog/categories/others/'>其它 (3)</a></li>
-  <li><a href='/blog/categories/distributed/'>分布式 (3)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (4)</a></li>
   <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
 </ul>
 </section>
@@ -276,6 +287,14 @@ var jiathis_config = {data_track_clickback:'true'};
 <section>
   <h1>最近博文</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/10/26/urllib2-with-python/">如何使用urllib2获取网络资源</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/21/writing-an-ice-application-with-java/">用Java实现一个ICE应用</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/10/20/ice-chat-demo/">ICE Chat Demo(中文翻译)</a>
@@ -287,14 +306,6 @@ var jiathis_config = {data_track_clickback:'true'};
     
       <li class="post">
         <a href="/blog/2013/10/16/pca/">主成份分析(PCA)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/">Zookeeper-源码分析(一)——简介</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/">在Octopress中显示数学公式</a>
       </li>
     
   </ul>

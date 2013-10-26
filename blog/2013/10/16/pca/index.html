@@ -132,9 +132,43 @@
 
 <div class="entry-content"><p>主成份分析（Principal components analysis，PCA）是一种分析、简化数据集的技术。PCA在应用中使用得非常广泛，比如：降维、有损数据压缩、特征提取以及数据可视化。</p>
 
-<p>对PCA的定义有两种常用的方法，但是最终都产生了相同的算法。第一种定义为将一个高维的数据次投影到低维的线性空间上，这样的低维空间被称为主体子空间，投影后，使数据的方差最大化，该定义可称为最大方差理论。等价地，</p>
+<p>对PCA的定义有两种常用的方法，但是最终都产生了相同的算法。第一种定义为将一个高维的数据投影到低维的线性空间上，这样的低维空间被称为主体子空间，投影后，使数据的方差最大化，该定义可称为最大方差理论。等价地，</p>
 
 <h3>最大方差理论</h3>
+
+<p>假设有一个样本数据集{$$$x_{n}$$$}，其中n=1,……,N，$$$x_{n}$$$为欧几时德空间中维度为D的变量。我们的目的是将数据投影到维数为M的空间上，并且使投影后数据的方差最大，其中$$$D&lt;M$$$。就目前而言，假设M的值是已知的，在后面，我们将通过数据集以确定一个合适的M值。</p>
+
+<p>首先，我们考虑将数据投影到一个一维空间上，即M=1。定义该空间的方向向量用D维向量$$$u_1$$$表示，为了方便起见，我们应该选择一个单位向量以定义空间的方法，因此$$$u_1$$$应该满足 $$$ u_1 ^{T}u_1=1 $$$。我们只关心$$$u_1$$$所决定的方向，而不关心$$$u_1$$$本身。数据集中的每个数据$$$x_n$$$投影后得到一个标量$$$x_1 ^Tx_n$$$，投影后数据的均值为$$$u_1 ^T\bar{x}$$$，其中$$$\bar{x}$$$为样本数据的均值，由以下式子得到。\[\bar{x}={1 \over N}\sum_{n=1} ^Nx_n\]
+投影后数据的均方差为\[ \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) ^2\]</p>
+
+<p>\[\Rightarrow \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) (u_1 ^T x_n - u_1 ^T \bar{x}) ^T\]</p>
+
+<p>\[\Rightarrow \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) (x_n ^T u_1 - \bar{x} ^T u_1)\]</p>
+
+<p>\[\Rightarrow \quad  \bar{V} = {1 \over N} \sum_{n=1} ^N u_1 ^T(x_n - \bar{x}) (x_n  - \bar{x}) ^Tu_1  \]</p>
+
+<p>\[\Rightarrow \quad \bar{V} = u_1 ^T{1 \over N} \sum_{n=1} ^N (x_n - \bar{x}) (x_n - \bar{x}) ^Tu_1  \]</p>
+
+<p>令</p>
+
+<p>\[ S = {1 \over N} \sum_{n=1} ^N (x_n - \bar{x}) (x_n - \bar{x}) ^T  \]</p>
+
+<p>因此，投影后数据的方差可以写成如下形式
+\[ \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) ^2 = u_1 ^T S u_1\]</p>
+
+<p>现在我们寻找一个合适的向量$$$u_1$$$使用方差$$$u_1 ^T $u_1$$$最大。显示，这是一个带约束的最大化问题，我们可以选择$$$u_1 ^T u_1 = 1$$$作为约束条件，然后我们增加一个拉格朗日因子，得到一个不带约束条件的最大化问题
+\[ L(u_1) = u_1 ^TSu_1 +\lambda_1(1-u_1 ^T u_1)\]
+对$$$L(u_1)$$$求关于$$$u_1$$$的导数，有</p>
+
+<p>\[\frac{\partial L(u_1)}{\partial u_1} = 2Su_1 - 2\lambda_1u_1\]
+以上的求导过程会用到以下结论:
+\[(1) \qquad \quad trABC=trCAB=trBCA\]
+\[(2) \qquad \qquad \qquad trA=trA ^T \qquad \]
+\[(3) \qquad tr(A+B)=trA +trB \qquad \]
+\[(4) \qquad \qquad \nabla _AtrAB=B ^T \qquad \quad \]
+\[(5) \qquad \nabla _{A ^T} f(A)=(\nabla _Af(A)) ^T \qquad \]
+\[(6) \quad \nabla_AtrABA ^TC= CAB+C ^TAB ^T\]
+其中，A, B, C为矩阵。</p>
 </div>
 
 
@@ -222,8 +256,9 @@ var jiathis_config = {data_track_clickback:'true'};
 <h1>博客分类</h1>
 <ul>
   <li><a href='/blog/categories/linux/'>Linux (1)</a></li>
+  <li><a href='/blog/categories/Python/'>Python (1)</a></li>
   <li><a href='/blog/categories/others/'>其它 (3)</a></li>
-  <li><a href='/blog/categories/distributed/'>分布式 (3)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (4)</a></li>
   <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
 </ul>
 </section>
@@ -231,6 +266,14 @@ var jiathis_config = {data_track_clickback:'true'};
 <section>
   <h1>最近博文</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/10/26/urllib2-with-python/">如何使用urllib2获取网络资源</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/21/writing-an-ice-application-with-java/">用Java实现一个ICE应用</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/10/20/ice-chat-demo/">ICE Chat Demo(中文翻译)</a>
@@ -242,14 +285,6 @@ var jiathis_config = {data_track_clickback:'true'};
     
       <li class="post">
         <a href="/blog/2013/10/16/pca/">主成份分析(PCA)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/">Zookeeper-源码分析(一)——简介</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/">在Octopress中显示数学公式</a>
       </li>
     
   </ul>

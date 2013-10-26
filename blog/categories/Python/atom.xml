@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[博客分类: Python | 精神兵的 Blog]]></title>
+  <link href="http://jackliu8722.github.com/blog/categories/Python/atom.xml" rel="self"/>
+  <link href="http://jackliu8722.github.com/"/>
+  <updated>2013-10-26T20:01:12+08:00</updated>
+  <id>http://jackliu8722.github.com/</id>
+  <author>
+    <name><![CDATA[jackliu]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[如何使用urllib2获取网络资源]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/10/26/urllib2-with-python/"/>
+    <updated>2013-10-26T17:00:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/10/26/urllib2-with-python</id>
+    <content type="html"><![CDATA[<p></br>
+<b>注意</b>:本文翻译自Python官方文档，Python的版本为3.3.2</p>
+
+<h3>1 简介</h3>
+
+<p>urllib.request是Python的一个模块，它可以通过URL（统一资源定位）获取网络上的信息。该模块提供了一个非常简单的接口函数urlopen,能够使用不同的协议获取URL指定的资源。它还提供了一个稍微复杂的接口处理常见的情况，比如基本的身份验证、cookies、代理等等。</p>
+
+<p>urllib通过相关的网络协议（例如，FTP,HTTP）可以支持许多URL schemes（由URL字符串中的":"符号之前的字符串标识，例如，ftp是URL"ftp://python.org/"的schemes）.本教程重点介绍最常用的协议——HTTP。</p>
+
+<p>对于简单的应用中，urlopen的使用是非常简单的，但是，当你打开HTTP协议的网址时，只要遇到一些错误或者不可处理的情况，就需要对HTTP协议有一定的理解。HTTP最全面最权威的参考文档是RFC 2616，这是一个技术文档，而且不易于阅读。此处的使用文档的目的是介绍urlib的使用，关于HTTP更多的细节可以参考RFC 2616文档，它的作用不是取代urllib.request文档，而是作为urllib.request的一个补充知识。</p>
+
+<h3>2 获取网络资源</h3>
+
+<p>使用urllib.request的最简单的方法如下：</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'><span class="n">response</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="s">&#39;http://python.org/&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">html</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>如果想通过URL检索资源，并将结果存储在一个临时位置，可以通过urlretrieve函数到达要求。
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'><span class="n">local_filename</span><span class="p">,</span><span class="n">headers</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s">&#39;http://python.org/&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">html</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_filename</span><span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+urllib的使用就如以上的方法那样简单（注意，除了使用http,我们也可以使用ftp协议，file等等。），然而本教程的目的是介绍更复杂的HTTP协议。</p>
+
+<p>HTTP协议包括请求和响应，客户端发出请求，而服务器响应请求。urllib.request代表了HTTP的请求对象，表示我们创建的服务请求。在最简单的形式中，首先创建一个Request对象，指定需要获取资源的URL，然后调用urlopen返回一个针对请求的响应对象，这处响应对象类似文件对象，也就是说，可以调用read函数获取响应的内容。</p>
+]]></content>
+  </entry>
+  
+</feed>
