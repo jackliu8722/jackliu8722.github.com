@@ -351,7 +351,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>runFromConfig的执行流程已经在以上代码说明了，下面主要对quorum的start方法进行分析。</p>
+<p>runFromConfig的执行流程中，主要创建了QuorumPeer对象，该类定义了Server类型。首先根据配置对象中的配置信息设置相关的配置，然后调用start函数启动服务，QuorumPeer类将在后面的文章中进行详细地分析。</p>
 </div>
 
 
