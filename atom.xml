@@ -4,7 +4,7 @@
   <title><![CDATA[精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2013-10-26T21:27:16+08:00</updated>
+  <updated>2013-10-27T11:35:19+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -752,6 +752,25 @@ $
 \[(5) \qquad \nabla _{A ^T} f(A)=(\nabla _Af(A)) ^T \qquad \]
 \[(6) \quad \nabla_AtrABA ^TC= CAB+C ^TAB ^T\]
 其中，A, B, C为矩阵。</p>
+
+<p>由$$$L(u_1)$$$的表达式有
+\[\frac{\partial L(u_1)}{\partial u_1} = \nabla_{u_1}u_1 ^TSu_1 - \lambda _1\nabla _{u_1}u_1 ^T u_1\]
+而</p>
+
+<p>\[\nabla_{u_1}u_1 ^TSu_1=\nabla_{u_1}tru_1 ^TSu_1\]
+\[ \qquad \qquad =\nabla_{u_1}tru_1u_1 ^TS\]
+\[ \qquad \quad \qquad =\nabla_{u_1}tru_1Eu_1 ^TS \]
+\[ \qquad \qquad \qquad =Su_1E+S ^Tu_1E ^T\]
+\[ \qquad \qquad =2Su_1 \qquad  \]
+因此$$$\nabla_{u_1}u_1 ^TSu_1 = 2Su_1$$$,其中，使用了条件$$$S=S ^T$$$,$$$E=E ^T$$$。</p>
+
+<p>同样地，可以求得$$$\nabla_{u_1}u_1 ^T u_1=2u_1$$$，因此，有$$$\frac{\partial L(u_1)}{\partial u_1} = 2Su_1 - 2\lambda_1u_1$$$，令$$$\frac{\partial L(u_1)}{\partial u_1} = 0$$$,有\[ 2Su_1 - 2\lambda_1u_1 = 0\]
+推导得到式子
+\[Su_1 =\lambda_1u_1\]
+也就是说，$$$u_1$$$必须是矩阵的一个特征向量，我们再左乘一个$$$u_1 ^T$$$得到
+\[u_1 ^TSu_1 = u_1 ^T\lambda_1u_1 = \lambda_1 u_1 ^Tu_1\]
+由$$$u_1 ^T u_1 = 1$$$可得\[u_1 ^TSu_1 = \lambda_1\]
+因此，当我们设置$$$u_1$$$等于矩阵$$$S$$$的最大特征值的特征向量时，方差可取得最大值。此时，$$$u_1$$$称为第一主成分特征向量。</p>
 ]]></content>
   </entry>
   
