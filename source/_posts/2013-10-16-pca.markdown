@@ -43,3 +43,26 @@ categories: 机器学习{ml}
 \\[(5) \qquad \nabla \_{A ^T} f(A)=(\nabla \_Af(A)) ^T \qquad \\]
 \\[(6) \quad \nabla\_AtrABA ^TC= CAB+C ^TAB ^T\\]
 其中，A, B, C为矩阵。
+
+由$$$L(u_1)$$$的表达式有
+\\[\frac{\partial L(u_1)}{\partial u_1} = \nabla\_{u_1}u_1 ^TSu_1 - \lambda \_1\nabla \_{u_1}u_1 ^T u_1\\]
+而
+
+\\[\nabla\_{u_1}u_1 ^TSu_1=\nabla\_{u_1}tru_1 ^TSu_1\\]
+\\[ \qquad \qquad =\nabla\_{u_1}tru_1u_1 ^TS\\]
+\\[ \qquad \quad \qquad =\nabla\_{u_1}tru_1Eu_1 ^TS \\]
+\\[ \qquad \qquad \qquad =Su_1E+S ^Tu_1E ^T\\]
+\\[ \qquad \qquad =2Su_1 \qquad  \\]
+因此$$$\nabla\_{u_1}u_1 ^TSu_1 = 2Su_1$$$,其中，使用了条件$$$S=S ^T$$$,$$$E=E ^T$$$。
+
+同样地，可以求得$$$\nabla\_{u_1}u_1 ^T u_1=2u_1$$$，因此，有$$$\frac{\partial L(u_1)}{\partial u_1} = 2Su_1 - 2\lambda\_1u_1$$$，令$$$\frac{\partial L(u_1)}{\partial u_1} = 0$$$,有\\[ 2Su_1 - 2\lambda\_1u_1 = 0\\]
+推导得到式子
+\\[Su_1 =\lambda\_1u_1\\]
+也就是说，$$$u_1$$$必须是矩阵的一个特征向量，我们再左乘一个$$$u_1 ^T$$$得到
+\\[u_1 ^TSu_1 = u_1 ^T\lambda\_1u_1 = \lambda\_1 u_1 ^Tu_1\\]
+由$$$u_1 ^T u_1 = 1$$$可得\\[u_1 ^TSu_1 = \lambda\_1\\]
+因此，当我们设置$$$u_1$$$等于矩阵$$$S$$$的最大特征值的特征向量时，方差可取得最大值。此时，$$$u_1$$$称为第一主成分特征向量。
+
+我们可以通过以增量的方式选择一个新的方向定义额外的主成分以使方差最大化，这些新选择的方向必须与已经选择的方向向量正交。假设我们考虑一个M维的投影空间，使方差最大化的最优线性投影为方差矩阵$$$S$$$的前M特征值对应的特征向量$$$u_1,...,u_M$$$，这个结论很容易使用前面的推导进行证明。
+
+总结一下，主成分分析涉及到计算数据的均值$$$\bar {x}$$$和方差矩阵$$$S$$$，然后计算方差矩阵$$$S$$$前M大特征值对应的特征向量。寻找特征向量和特征值，以及其它与特征向量有关的分解定理的算法，可以在Golub and Van Loan (1996)的文章中找到。
