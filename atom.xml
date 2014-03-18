@@ -4,7 +4,7 @@
   <title><![CDATA[精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2013-10-27T11:35:19+08:00</updated>
+  <updated>2014-03-18T11:22:04+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -12,6 +12,1605 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Zookeeper之java实例]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/11/08/zookeeper-java-example/"/>
+    <updated>2013-11-08T23:45:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/11/08/zookeeper-java-example</id>
+    <content type="html"><![CDATA[<h5>注：本文翻译自zookeeper官方文档，原文请点击<a href="http://zookeeper.apache.org/doc/r3.4.5/javaExample.html">这里</a>。</h5>
+
+<h2>一个简单的Watch客户端</h2>
+
+<p>为了介绍Zookeeper的Java API，我们开发一个非常简单的Watch客户端。该Zookeeper客户观察Zookeeper的节点变化，并通过启动或者终止程序进行响应。</p>
+
+<h4>要求</h4>
+
+<p>该客户端会达到以下4点要求：</p>
+
+<ul>
+<li>需要以下参数：Zookeeper服务的地址，被观察节点的名称和和个可执行的对象。</li>
+<li>获取与节点相关的数据并启动可行对象。</li>
+<li>如果节点发生变化，客户端重新获取节点内容并启动可执行对象。</li>
+<li>如果被观察的节点消息，客户端将会终止可招待对象。</li>
+</ul>
+
+
+<h2>程序设计</h2>
+
+<p>按照惯例，Zookeeper应用程序有两部分组成，一部分管理网络连接，另一部分用于监听数据。在这个应用当中，一个称为Executor的类保持与Zookeeper服务器的连接，而监控类DataMonitor监听Zookeeper文件目录树中的数据变化。此外，类Executor包含了主线程和执行逻辑，负责用户与服务器的交互行为，同时根据Zookeeper节点的状态，关闭或者重启可执行对象。</p>
+
+<h4>Executor类</h4>
+
+<p>Executor对象是该示例程序的主容器，它包含Zookeeper对象和DataMonitor对象。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> 
+</span><span class='line'>  <span class="c1">//from the Executor class...</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){</span>
+</span><span class='line'>      <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="o">){</span>
+</span><span class='line'>          <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;USAGE: Executor hostPort znode filename  paogran [args ...]&quot;</span><span class="o">);</span>
+</span><span class='line'>          <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>      <span class="n">String</span> <span class="n">hostPort</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+</span><span class='line'>      <span class="n">String</span> <span class="n">znode</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span>
+</span><span class='line'>      <span class="n">String</span> <span class="n">filename</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">2</span><span class="o">]</span>
+</span><span class='line'>      <span class="n">String</span> <span class="n">exec</span><span class="o">[]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="o">[</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="mi">3</span><span class="o">];</span>
+</span><span class='line'>      <span class="n">System</span><span class="o">.</span><span class="na">arraycopy</span><span class="o">(</span><span class="n">args</span><span class="o">,</span><span class="mi">3</span><span class="o">,</span><span class="n">exec</span><span class="o">,</span><span class="n">exec</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+</span><span class='line'>      <span class="k">try</span><span class="o">{</span>
+</span><span class='line'>          <span class="k">new</span> <span class="nf">Executor</span><span class="o">(</span><span class="n">hostPort</span><span class="o">,</span><span class="n">znode</span><span class="o">,</span><span class="n">filename</span><span class="o">,</span><span class="n">exec</span><span class="o">).</span><span class="na">run</span><span class="o">();</span>
+</span><span class='line'>      <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
+</span><span class='line'>          <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">Executor</span><span class="o">(</span><span class="n">String</span> <span class="n">hostPort</span><span class="o">,</span><span class="n">String</span> <span class="n">znode</span><span class="o">,</span><span class="n">String</span> <span class="n">filename</span><span class="o">,</span> <span class="n">String</span> <span class="n">exec</span><span class="o">[])</span> <span class="kd">throws</span> <span class="n">KeeperException</span><span class="o">,</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class='line'>      <span class="k">this</span><span class="o">.</span><span class="na">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">this</span><span class="o">.</span><span class="na">exec</span> <span class="o">=</span> <span class="n">exec</span><span class="o">;</span>
+</span><span class='line'>      <span class="n">zk</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ZooKeeper</span><span class="o">(</span><span class="n">hostPort</span><span class="o">,</span><span class="mi">3000</span><span class="o">,</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>      <span class="n">dm</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataMonitor</span><span class="o">(</span><span class="n">zk</span><span class="o">,</span><span class="n">anode</span><span class="o">,</span><span class="kc">null</span><span class="o">,</span><span class="k">this</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(){</span>
+</span><span class='line'>      <span class="k">try</span><span class="o">{</span>
+</span><span class='line'>          <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">){</span>
+</span><span class='line'>              <span class="k">while</span><span class="o">(!</span><span class="n">dm</span><span class="o">.</span><span class="na">dead</span><span class="o">){</span>
+</span><span class='line'>                  <span class="n">wait</span><span class="o">();</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">){</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>回想一下，类Execotur的工作是启动和停止可执行对象，从而响应Zookeeper发送的事件，而该对象的名称是通过命令行传递的参数进行设置的。正如在上面看到的代码中，Executor对象将自身的引用作为ZooKeeper构造函数的参数，代表一个Watcher对象，同时它还通过将自身的引用作为Monitor构造函数的参数，代表DataMonitorListener类的一个对象。每个Executor的定义中，都实现了这丙个接口：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Executor</span> <span class="kd">implements</span> <span class="n">Watcher</span><span class="o">,</span><span class="n">Runnable</span><span class="o">,</span> <span class="n">Monitor</span><span class="o">.</span><span class="na">DataMonitorListener</span><span class="o">{</span>
+</span><span class='line'>  <span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>接口Watcher由ZooKeeper的java API定义，ZooKeeper通过该接口将事件传给客户端容器，它只支持一个process方法，它将处理客户端感兴趣的事件，比如ZooKeeper连接的状态或者ZooKeeper会话。在这个例子当中，Executor只是简单的将这些事件下发给DataMonitor对象，由DataMonitor对象决定做什么，这样做的目的仅仅为了方便说明Executor对象或者类Executor这样的对象持有与ZooKeeper的连接，但是它会将事件委派给其它对象进行处理，同时在发起观察事件的处理上选择该方式做为默认的通道（详见后面部分）。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> 
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">WatchedEvent</span> <span class="n">event</span><span class="o">){</span>
+</span><span class='line'>      <span class="n">dm</span><span class="o">.</span><span class="na">process</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>另一方面，接口DataMonitorListener不是ZooKeeper API的一部分，它完全是为这个示例程序专门自定义的接口，对象DataMonitro使用它与容器通信，也就是Executor对象。DataMonitorListener接口看起来如下：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kd">interface</span> <span class="nc">DataMonitorListener</span> <span class="o">{</span>
+</span><span class='line'>      <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * The existence status of the node has changed.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>      <span class="kt">void</span> <span class="nf">exists</span><span class="o">(</span><span class="kt">byte</span> <span class="n">data</span><span class="o">[]);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * The ZooKeeper session is no longer valid.</span>
+</span><span class='line'><span class="cm">     * </span>
+</span><span class='line'><span class="cm">     * @param rc</span>
+</span><span class='line'><span class="cm">     * the ZooKeeper reason code</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>      <span class="kt">void</span> <span class="nf">closing</span><span class="o">(</span><span class="kt">int</span> <span class="n">rc</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该接口被定义在DataMonitor类中，并且由Executor类实现。当Executor.exists方法被调用时，Executor对象按要求决定是启动还是关闭可执行对象。如果znode节点不存在了，则需要关闭可执行对象。</p>
+
+<p>当Executor.closing方法被调用时，Executor对象决定是否关闭自身以响应ZooKeeper连接的永久消息。</p>
+
+<p>读者可能已经猜到了，为响应ZooKeeper状态变化的事件，DataMonitor是调用这些方法的对象。</p>
+
+<p>类Executor实现DataMonitorListener接口的exists和closing方法的代码如下：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">exists</span><span class="o">(</span> <span class="kt">byte</span> <span class="o">[]</span> <span class="n">data</span><span class="o">){</span>
+</span><span class='line'>      <span class="k">if</span><span class="o">(</span><span class="n">data</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
+</span><span class='line'>          <span class="k">if</span><span class="o">(</span><span class="n">child</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Killing process&quot;</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">child</span><span class="o">.</span><span class="na">destory</span><span class="o">();</span>
+</span><span class='line'>              <span class="k">try</span><span class="o">{</span>
+</span><span class='line'>                  <span class="n">child</span><span class="o">.</span><span class="na">waitFor</span><span class="o">();</span>
+</span><span class='line'>              <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">){</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>          <span class="n">child</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>      <span class="o">}</span><span class="k">else</span><span class="o">{</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">child</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
+</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Stopping child&quot;</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">child</span><span class="o">.</span><span class="na">destory</span><span class="o">();</span>
+</span><span class='line'>              <span class="k">try</span><span class="o">{</span>
+</span><span class='line'>                  <span class="n">child</span><span class="o">.</span><span class="na">waitFor</span><span class="o">();</span>
+</span><span class='line'>              <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">){</span>
+</span><span class='line'>                  <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>          <span class="k">try</span><span class="o">{</span>
+</span><span class='line'>              <span class="n">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileOutputStream</span><span class="o">(</span><span class="n">filename</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">fos</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">fos</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">){</span>
+</span><span class='line'>              <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>          
+</span><span class='line'>          <span class="k">try</span><span class="o">{</span>
+</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Starting child&quot;</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">child</span> <span class="o">=</span> <span class="n">Runtime</span><span class="o">.</span><span class="na">getRuntime</span><span class="o">().</span><span class="na">exec</span><span class="o">(</span><span class="n">exec</span><span class="o">);</span>
+</span><span class='line'>              <span class="k">new</span> <span class="nf">StreamWriter</span><span class="o">(</span><span class="n">child</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">(),</span><span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">);</span>
+</span><span class='line'>              <span class="k">new</span> <span class="nf">StreamWriter</span><span class="o">(</span><span class="n">child</span><span class="o">.</span><span class="na">getErrorStream</span><span class="o">(),</span><span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">);</span>
+</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">){</span>
+</span><span class='line'>              <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">closing</span><span class="o">(</span><span class="kt">int</span> <span class="n">rc</span><span class="o">){</span>
+</span><span class='line'>      <span class="kd">synchronized</span><span class="o">(</span><span class="k">this</span><span class="o">){</span>
+</span><span class='line'>          <span class="n">notifyAll</span><span class="o">();</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>DataMonitor类</h4>
+
+<p>类DataMonitor实现了ZooKeeper逻辑，它大部分是异步的和事件驱动的，其构造函数如下：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> 
+</span><span class='line'>  <span class="kd">public</span> <span class="nf">DataMonitor</span><span class="o">(</span><span class="n">ZooKeeper</span> <span class="n">zk</span><span class="o">,</span><span class="n">String</span> <span class="n">anode</span><span class="o">,</span><span class="n">Watcher</span> <span class="n">chainedWatcher</span><span class="o">,</span><span class="n">DataMonitorListener</span> <span class="n">listener</span><span class="o">){</span>
+</span><span class='line'>      <span class="k">this</span><span class="o">.</span><span class="na">zk</span> <span class="o">=</span> <span class="n">zk</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">this</span><span class="o">.</span><span class="na">znode</span> <span class="o">=</span> <span class="n">anode</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">this</span><span class="o">.</span><span class="na">chainedWatcher</span> <span class="o">=</span> <span class="n">chainedWatcher</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">this</span><span class="o">.</span><span class="na">listener</span> <span class="o">=</span> <span class="n">listener</span><span class="o">;</span>
+</span><span class='line'>      <span class="c1">// Get things started by checking if the node exists. We are going</span>
+</span><span class='line'>      <span class="c1">// to be completely event driven</span>
+</span><span class='line'>      <span class="n">zk</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">znode</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="k">this</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通过调用ZooKpeeper对象上的exists方法检查anode节点是否存在，并通过对自身的引用(this)设置一个监听对象作为回调函数。当事件被触发，将会进行真正的执行过程。</p>
+
+<h6>注意：不要混淆完成回调与监听回调。完成回调方法ZooKeeper.exists恰好是StatCallbask.processResult方法，并且由类DataMonitor实现。当在ZooKeeper服务器上异步设置监听操作完成之后调用完成回调方法。另一方面，因为Executor已注册为ZooKeeper对象的监听器，因此，通过给Executor发送一个事件以触发监听回调方法。顺便说一句，读者可能会注意到，DataMonitor对象也可以将自身注册为事件监听器，这是ZooKeeper 3.3.0的新特性（支持多外监听器）。然后，在这个例子中，DataMonitor并没有注册为监听器。</h6>
+
+<p>当服务器完成ZooKeeper.esists操作之后，ZooKeeper API将调用客户端的完成回调函数：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kt">void</span> <span class="nf">processResult</span><span class="o">(</span><span class="kt">int</span> <span class="n">rc</span><span class="o">,</span> <span class="n">String</span> <span class="n">path</span><span class="o">,</span> <span class="n">Object</span> <span class="n">ctx</span><span class="o">,</span> <span class="n">Stat</span> <span class="n">stat</span><span class="o">){</span>
+</span><span class='line'>      <span class="kt">boolean</span> <span class="n">esists</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">switch</span><span class="o">(</span><span class="n">tr</span><span class="o">){</span>
+</span><span class='line'>      <span class="k">case</span> <span class="n">Code</span><span class="o">.</span><span class="na">Ok</span><span class="o">:</span>
+</span><span class='line'>          <span class="n">exists</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">case</span> <span class="n">Code</span><span class="o">.</span><span class="na">NoNode</span><span class="o">:</span>
+</span><span class='line'>          <span class="n">exists</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">case</span> <span class="n">Code</span><span class="o">.</span><span class="na">SessionExpired</span><span class="o">:</span>
+</span><span class='line'>      <span class="k">case</span> <span class="n">Code</span><span class="o">.</span><span class="na">NoAuth</span><span class="o">:</span>
+</span><span class='line'>          <span class="n">dead</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>          <span class="n">listener</span><span class="o">.</span><span class="na">closing</span><span class="o">(</span><span class="n">rc</span><span class="o">);</span>
+</span><span class='line'>          <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">default</span><span class="o">:</span>
+</span><span class='line'>          <span class="n">zk</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">anode</span><span class="o">,</span><span class="kc">true</span><span class="o">,</span><span class="k">this</span><span class="o">,</span><span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>          <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>      
+</span><span class='line'>      <span class="kt">byte</span> <span class="n">b</span><span class="o">[]</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>      <span class="k">if</span><span class="o">(</span><span class="n">exists</span><span class="o">){</span>
+</span><span class='line'>          <span class="k">try</span><span class="o">{</span>
+</span><span class='line'>              <span class="n">b</span> <span class="o">=</span> <span class="n">zk</span><span class="o">.</span><span class="na">getData</span><span class="o">(</span><span class="n">znode</span><span class="o">,</span><span class="kc">false</span><span class="o">,</span><span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">KeeperException</span> <span class="n">e</span><span class="o">){</span>
+</span><span class='line'>              <span class="c1">// We don&#39;t need to worry about recovering now. The watch</span>
+</span><span class='line'>              <span class="c1">// callbacks will kick off any exception handling</span>
+</span><span class='line'>              <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">interruptedException</span> <span class="n">e</span><span class="o">){</span>
+</span><span class='line'>              <span class="k">return</span> <span class="o">;</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>      <span class="k">if</span><span class="o">((</span><span class="n">b</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">b</span> <span class="o">!=</span> <span class="n">prevData</span><span class="o">]])</span> <span class="o">||</span> <span class="o">(</span><span class="n">b</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">Arrays</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">prevData</span><span class="o">,</span><span class="n">b</span><span class="o">))){</span>
+</span><span class='line'>          <span class="n">listener</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+</span><span class='line'>          <span class="n">prevData</span> <span class="o">=</span> <span class="n">b</span><span class="o">;</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该代码首先通过返回的状态代码检查节点是否存在、是否发生致命错误或者可恢复的错误。如果节点存在，则从节点上获取数据，并且如果节点的状态发生变化，将调用Executor对象的回调函数exists。注意，在调用方法getData时，不做任何异常处理，因为它有处理错误的监听器。如果在调用ZooKeeper.getData方法之前删除了节点，监听事件将触发一个回调。如果遇到了一个传输错误，当连接传回时将触发一个监听事件。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'>  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">WatchedEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="n">String</span> <span class="n">path</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="na">getPath</span><span class="o">();</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="n">Event</span><span class="o">.</span><span class="na">EventType</span><span class="o">.</span><span class="na">None</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="c1">// We are are being told that the state of the</span>
+</span><span class='line'>            <span class="c1">// connection has changed</span>
+</span><span class='line'>            <span class="k">switch</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getState</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">SyncConnected:</span>
+</span><span class='line'>                <span class="c1">// In this particular example we don&#39;t need to do anything</span>
+</span><span class='line'>                <span class="c1">// here - watches are automatically re-registered with </span>
+</span><span class='line'>                <span class="c1">// server and any watches triggered while the client was </span>
+</span><span class='line'>                <span class="c1">// disconnected will be delivered (in order of course)</span>
+</span><span class='line'>                <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>            <span class="k">case</span> <span class="nl">Expired:</span>
+</span><span class='line'>                <span class="c1">// It&#39;s all over</span>
+</span><span class='line'>                <span class="n">dead</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>                <span class="n">listener</span><span class="o">.</span><span class="na">closing</span><span class="o">(</span><span class="n">KeeperException</span><span class="o">.</span><span class="na">Code</span><span class="o">.</span><span class="na">SessionExpired</span><span class="o">);</span>
+</span><span class='line'>                <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>            <span class="k">if</span> <span class="o">(</span><span class="n">path</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">path</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">znode</span><span class="o">))</span> <span class="o">{</span>
+</span><span class='line'>                <span class="c1">// Something has changed on the node, let&#39;s find out</span>
+</span><span class='line'>                <span class="n">zk</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">znode</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="k">this</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>            <span class="o">}</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>        <span class="k">if</span> <span class="o">(</span><span class="n">chainedWatcher</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>            <span class="n">chainedWatcher</span><span class="o">.</span><span class="na">process</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果客户端库在会话过期（超时事件）之前与ZooKeeper服务器重新建立了通信通道(SyncConnected事件)，则所有的会话事件将自动地与服务器重建连接（自动复位是ZooKeeper 3.0.0的特性）。更多关于监听的介绍可以ZooKeeper的编程指南中找到。在这个函数的后面部分中，当DataMonitor收到一个节点事件时，将会调用ZooKeeper的exists函数，以处理变化。</p>
+
+<h4>所有的源码</h4>
+
+<figure class='code'><figcaption><span>Executor.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> 
+</span><span class='line'>  <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * A simple example program to use DataMonitor to start and</span>
+</span><span class='line'><span class="cm">     * stop executables based on a znode. The program watches the</span>
+</span><span class='line'><span class="cm">     * specified znode and saves the data that corresponds to the</span>
+</span><span class='line'><span class="cm">     * znode in the filesystem. It also starts the specified program</span>
+</span><span class='line'><span class="cm">     * with the specified arguments when the znode exists and kills</span>
+</span><span class='line'><span class="cm">     * the program if the znode goes away.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">java.io.FileOutputStream</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">java.io.InputStream</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">java.io.OutputStream</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.KeeperException</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.WatchedEvent</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.Watcher</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.ZooKeeper</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Executor</span>
+</span><span class='line'>      <span class="kd">implements</span> <span class="n">Watcher</span><span class="o">,</span> <span class="n">Runnable</span><span class="o">,</span> <span class="n">DataMonitor</span><span class="o">.</span><span class="na">DataMonitorListener</span>
+</span><span class='line'>  <span class="o">{</span>
+</span><span class='line'>      <span class="n">String</span> <span class="n">znode</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">DataMonitor</span> <span class="n">dm</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">ZooKeeper</span> <span class="n">zk</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">String</span> <span class="n">filename</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">String</span> <span class="n">exec</span><span class="o">[];</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">Process</span> <span class="n">child</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">public</span> <span class="nf">Executor</span><span class="o">(</span><span class="n">String</span> <span class="n">hostPort</span><span class="o">,</span> <span class="n">String</span> <span class="n">znode</span><span class="o">,</span> <span class="n">String</span> <span class="n">filename</span><span class="o">,</span>
+</span><span class='line'>            <span class="n">String</span> <span class="n">exec</span><span class="o">[])</span> <span class="kd">throws</span> <span class="n">KeeperException</span><span class="o">,</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">this</span><span class="o">.</span><span class="na">filename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">this</span><span class="o">.</span><span class="na">exec</span> <span class="o">=</span> <span class="n">exec</span><span class="o">;</span>
+</span><span class='line'>          <span class="n">zk</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ZooKeeper</span><span class="o">(</span><span class="n">hostPort</span><span class="o">,</span> <span class="mi">3000</span><span class="o">,</span> <span class="k">this</span><span class="o">);</span>
+</span><span class='line'>          <span class="n">dm</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataMonitor</span><span class="o">(</span><span class="n">zk</span><span class="o">,</span> <span class="n">znode</span><span class="o">,</span> <span class="kc">null</span><span class="o">,</span> <span class="k">this</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/**</span>
+</span><span class='line'><span class="cm">      * @param args</span>
+</span><span class='line'><span class="cm">         */</span>
+</span><span class='line'>      <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">err</span>
+</span><span class='line'>                    <span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;USAGE: Executor hostPort znode filename program  [args ...]&quot;</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>          <span class="n">String</span> <span class="n">hostPort</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+</span><span class='line'>          <span class="n">String</span> <span class="n">znode</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+</span><span class='line'>          <span class="n">String</span> <span class="n">filename</span> <span class="o">=</span> <span class="n">args</span><span class="o">[</span><span class="mi">2</span><span class="o">];</span>
+</span><span class='line'>          <span class="n">String</span> <span class="n">exec</span><span class="o">[]</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="o">[</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">-</span> <span class="mi">3</span><span class="o">];</span>
+</span><span class='line'>          <span class="n">System</span><span class="o">.</span><span class="na">arraycopy</span><span class="o">(</span><span class="n">args</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="n">exec</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">exec</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+</span><span class='line'>          <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>              <span class="k">new</span> <span class="nf">Executor</span><span class="o">(</span><span class="n">hostPort</span><span class="o">,</span> <span class="n">znode</span><span class="o">,</span> <span class="n">filename</span><span class="o">,</span> <span class="n">exec</span><span class="o">).</span><span class="na">run</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/***************************************************************************</span>
+</span><span class='line'><span class="cm">         * We do process any events ourselves, we just need to forward them on.</span>
+</span><span class='line'><span class="cm">         *</span>
+</span><span class='line'><span class="cm">         * @see  org.apache.zookeeper.Watcher#process(org.apache.zookeeper.proto.WatcherEvent)</span>
+</span><span class='line'><span class="cm">         */</span>
+</span><span class='line'>      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">WatchedEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="n">dm</span><span class="o">.</span><span class="na">process</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>              <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="k">while</span> <span class="o">(!</span><span class="n">dm</span><span class="o">.</span><span class="na">dead</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                          <span class="n">wait</span><span class="o">();</span>
+</span><span class='line'>                  <span class="o">}</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">closing</span><span class="o">(</span><span class="kt">int</span> <span class="n">rc</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="kd">synchronized</span> <span class="o">(</span><span class="k">this</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="n">notifyAll</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">static</span> <span class="kd">class</span> <span class="nc">StreamWriter</span> <span class="kd">extends</span> <span class="n">Thread</span> <span class="o">{</span>
+</span><span class='line'>          <span class="n">OutputStream</span> <span class="n">os</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="n">InputStream</span> <span class="n">is</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="n">StreamWriter</span><span class="o">(</span><span class="n">InputStream</span> <span class="n">is</span><span class="o">,</span> <span class="n">OutputStream</span> <span class="n">os</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="k">this</span><span class="o">.</span><span class="na">is</span> <span class="o">=</span> <span class="n">is</span><span class="o">;</span>
+</span><span class='line'>              <span class="k">this</span><span class="o">.</span><span class="na">os</span> <span class="o">=</span> <span class="n">os</span><span class="o">;</span>
+</span><span class='line'>              <span class="n">start</span><span class="o">();</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>              <span class="kt">byte</span> <span class="n">b</span><span class="o">[]</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="mi">80</span><span class="o">];</span>
+</span><span class='line'>              <span class="kt">int</span> <span class="n">rc</span><span class="o">;</span>
+</span><span class='line'>              <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="k">while</span> <span class="o">((</span><span class="n">rc</span> <span class="o">=</span> <span class="n">is</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">b</span><span class="o">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                          <span class="n">os</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">b</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">rc</span><span class="o">);</span>
+</span><span class='line'>                  <span class="o">}</span>
+</span><span class='line'>              <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">exists</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">data</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="o">(</span><span class="n">child</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Killing process&quot;</span><span class="o">);</span>
+</span><span class='line'>                  <span class="n">child</span><span class="o">.</span><span class="na">destroy</span><span class="o">();</span>
+</span><span class='line'>                  <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>                          <span class="n">child</span><span class="o">.</span><span class="na">waitFor</span><span class="o">();</span>
+</span><span class='line'>                  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="o">}</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>              <span class="n">child</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>          <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="o">(</span><span class="n">child</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Stopping child&quot;</span><span class="o">);</span>
+</span><span class='line'>                  <span class="n">child</span><span class="o">.</span><span class="na">destroy</span><span class="o">();</span>
+</span><span class='line'>                  <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>                          <span class="n">child</span><span class="o">.</span><span class="na">waitFor</span><span class="o">();</span>
+</span><span class='line'>                  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                          <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>                  <span class="o">}</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>              <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="n">FileOutputStream</span> <span class="n">fos</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileOutputStream</span><span class="o">(</span><span class="n">filename</span><span class="o">);</span>
+</span><span class='line'>                  <span class="n">fos</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+</span><span class='line'>                  <span class="n">fos</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</span><span class='line'>              <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>              <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Starting child&quot;</span><span class="o">);</span>
+</span><span class='line'>                  <span class="n">child</span> <span class="o">=</span> <span class="n">Runtime</span><span class="o">.</span><span class="na">getRuntime</span><span class="o">().</span><span class="na">exec</span><span class="o">(</span><span class="n">exec</span><span class="o">);</span>
+</span><span class='line'>                  <span class="k">new</span> <span class="nf">StreamWriter</span><span class="o">(</span><span class="n">child</span><span class="o">.</span><span class="na">getInputStream</span><span class="o">(),</span> <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">);</span>
+</span><span class='line'>                  <span class="k">new</span> <span class="nf">StreamWriter</span><span class="o">(</span><span class="n">child</span><span class="o">.</span><span class="na">getErrorStream</span><span class="o">(),</span> <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">);</span>
+</span><span class='line'>              <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IOException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><figcaption><span>DataMonitor.java </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="cm">/**</span>
+</span><span class='line'><span class="cm">     * A simple class that monitors the data and existence of a ZooKeeper</span>
+</span><span class='line'><span class="cm">     * node. It uses asynchronous ZooKeeper APIs.</span>
+</span><span class='line'><span class="cm">    */</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">java.util.Arrays</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.KeeperException</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.WatchedEvent</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.Watcher</span><span class="o">;</span> 
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.ZooKeeper</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.AsyncCallback.StatCallback</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.KeeperException.Code</span><span class="o">;</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">org.apache.zookeeper.data.Stat</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">class</span> <span class="nc">DataMonitor</span> <span class="kd">implements</span> <span class="n">Watcher</span><span class="o">,</span> <span class="n">StatCallback</span> <span class="o">{</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">ZooKeeper</span> <span class="n">zk</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">String</span> <span class="n">znode</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">Watcher</span> <span class="n">chainedWatcher</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kt">boolean</span> <span class="n">dead</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">DataMonitorListener</span> <span class="n">listener</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kt">byte</span> <span class="n">prevData</span><span class="o">[];</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">public</span> <span class="nf">DataMonitor</span><span class="o">(</span><span class="n">ZooKeeper</span> <span class="n">zk</span><span class="o">,</span> <span class="n">String</span> <span class="n">znode</span><span class="o">,</span> <span class="n">Watcher</span> <span class="n">chainedWatcher</span><span class="o">,</span>
+</span><span class='line'>            <span class="n">DataMonitorListener</span> <span class="n">listener</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">this</span><span class="o">.</span><span class="na">zk</span> <span class="o">=</span> <span class="n">zk</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">this</span><span class="o">.</span><span class="na">znode</span> <span class="o">=</span> <span class="n">znode</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">this</span><span class="o">.</span><span class="na">chainedWatcher</span> <span class="o">=</span> <span class="n">chainedWatcher</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">this</span><span class="o">.</span><span class="na">listener</span> <span class="o">=</span> <span class="n">listener</span><span class="o">;</span>
+</span><span class='line'>          <span class="c1">// Get things started by checking if the node exists. We are going</span>
+</span><span class='line'>          <span class="c1">// to be completely event driven</span>
+</span><span class='line'>          <span class="n">zk</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">znode</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="k">this</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/**</span>
+</span><span class='line'><span class="cm">         * Other classes use the DataMonitor by implementing this method</span>
+</span><span class='line'><span class="cm">         */</span>
+</span><span class='line'>      <span class="kd">public</span> <span class="kd">interface</span> <span class="nc">DataMonitorListener</span> <span class="o">{</span>
+</span><span class='line'>          <span class="cm">/**</span>
+</span><span class='line'><span class="cm">             * The existence status of the node has changed.</span>
+</span><span class='line'><span class="cm">             */</span>
+</span><span class='line'>          <span class="kt">void</span> <span class="nf">exists</span><span class="o">(</span><span class="kt">byte</span> <span class="n">data</span><span class="o">[]);</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="cm">/**</span>
+</span><span class='line'><span class="cm">             * The ZooKeeper session is no longer valid.</span>
+</span><span class='line'><span class="cm">             *</span>
+</span><span class='line'><span class="cm">             * @param rc</span>
+</span><span class='line'><span class="cm">             *                the ZooKeeper reason code</span>
+</span><span class='line'><span class="cm">             */</span>
+</span><span class='line'>          <span class="kt">void</span> <span class="nf">closing</span><span class="o">(</span><span class="kt">int</span> <span class="n">rc</span><span class="o">);</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">process</span><span class="o">(</span><span class="n">WatchedEvent</span> <span class="n">event</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="n">String</span> <span class="n">path</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="na">getPath</span><span class="o">();</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getType</span><span class="o">()</span> <span class="o">==</span> <span class="n">Event</span><span class="o">.</span><span class="na">EventType</span><span class="o">.</span><span class="na">None</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="c1">// We are are being told that the state of the</span>
+</span><span class='line'>              <span class="c1">// connection has changed</span>
+</span><span class='line'>              <span class="k">switch</span> <span class="o">(</span><span class="n">event</span><span class="o">.</span><span class="na">getState</span><span class="o">())</span> <span class="o">{</span>
+</span><span class='line'>              <span class="k">case</span> <span class="nl">SyncConnected:</span>
+</span><span class='line'>                  <span class="c1">// In this particular example we don&#39;t need to do anything</span>
+</span><span class='line'>                  <span class="c1">// here - watches are automatically re-registered with </span>
+</span><span class='line'>                  <span class="c1">// server and any watches triggered while the client was </span>
+</span><span class='line'>                  <span class="c1">// disconnected will be delivered (in order of course)</span>
+</span><span class='line'>                  <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>              <span class="k">case</span> <span class="nl">Expired:</span>
+</span><span class='line'>                  <span class="c1">// It&#39;s all over</span>
+</span><span class='line'>                  <span class="n">dead</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>                  <span class="n">listener</span><span class="o">.</span><span class="na">closing</span><span class="o">(</span><span class="n">KeeperException</span><span class="o">.</span><span class="na">Code</span><span class="o">.</span><span class="na">SessionExpired</span><span class="o">);</span>
+</span><span class='line'>                  <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="o">(</span><span class="n">path</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">path</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">znode</span><span class="o">))</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="c1">// Something has changed on the node, let&#39;s find out</span>
+</span><span class='line'>                  <span class="n">zk</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">znode</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="k">this</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">chainedWatcher</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="n">chainedWatcher</span><span class="o">.</span><span class="na">process</span><span class="o">(</span><span class="n">event</span><span class="o">);</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>      
+</span><span class='line'>      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">processResult</span><span class="o">(</span><span class="kt">int</span> <span class="n">rc</span><span class="o">,</span> <span class="n">String</span> <span class="n">path</span><span class="o">,</span> <span class="n">Object</span> <span class="n">ctx</span><span class="o">,</span> <span class="n">Stat</span> <span class="n">stat</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="kt">boolean</span> <span class="n">exists</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">switch</span> <span class="o">(</span><span class="n">rc</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>          <span class="k">case</span> <span class="n">Code</span><span class="o">.</span><span class="na">Ok</span><span class="o">:</span>
+</span><span class='line'>              <span class="n">exists</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>              <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">case</span> <span class="n">Code</span><span class="o">.</span><span class="na">NoNode</span><span class="o">:</span>
+</span><span class='line'>              <span class="n">exists</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class='line'>              <span class="k">break</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">case</span> <span class="n">Code</span><span class="o">.</span><span class="na">SessionExpired</span><span class="o">:</span>
+</span><span class='line'>          <span class="k">case</span> <span class="n">Code</span><span class="o">.</span><span class="na">NoAuth</span><span class="o">:</span>
+</span><span class='line'>              <span class="n">dead</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class='line'>              <span class="n">listener</span><span class="o">.</span><span class="na">closing</span><span class="o">(</span><span class="n">rc</span><span class="o">);</span>
+</span><span class='line'>              <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">default</span><span class="o">:</span>
+</span><span class='line'>              <span class="c1">// Retry errors</span>
+</span><span class='line'>              <span class="n">zk</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">znode</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="k">this</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>              <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="kt">byte</span> <span class="n">b</span><span class="o">[]</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">(</span><span class="n">exists</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>              <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="n">b</span> <span class="o">=</span> <span class="n">zk</span><span class="o">.</span><span class="na">getData</span><span class="o">(</span><span class="n">znode</span><span class="o">,</span> <span class="kc">false</span><span class="o">,</span> <span class="kc">null</span><span class="o">);</span>
+</span><span class='line'>              <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">KeeperException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="c1">// We don&#39;t need to worry about recovering now. The watch</span>
+</span><span class='line'>                  <span class="c1">// callbacks will kick off any exception handling</span>
+</span><span class='line'>                  <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
+</span><span class='line'>              <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>                  <span class="k">return</span><span class="o">;</span>
+</span><span class='line'>              <span class="o">}</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>          <span class="k">if</span> <span class="o">((</span><span class="n">b</span> <span class="o">==</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">b</span> <span class="o">!=</span> <span class="n">prevData</span><span class="o">)</span>
+</span><span class='line'>                  <span class="o">||</span> <span class="o">(</span><span class="n">b</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">Arrays</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">prevData</span><span class="o">,</span> <span class="n">b</span><span class="o">)))</span> <span class="o">{</span>
+</span><span class='line'>              <span class="n">listener</span><span class="o">.</span><span class="na">exists</span><span class="o">(</span><span class="n">b</span><span class="o">);</span>
+</span><span class='line'>              <span class="n">prevData</span> <span class="o">=</span> <span class="n">b</span><span class="o">;</span>
+</span><span class='line'>          <span class="o">}</span>
+</span><span class='line'>      <span class="o">}</span>
+</span><span class='line'>  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[linux源码分析之进程表示]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/11/07/linux-kernel-001/"/>
+    <updated>2013-11-07T08:43:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/11/07/linux-kernel-001</id>
+    <content type="html"><![CDATA[<p>linux进程的概念在这里就不介绍，网上可以找到非常多的资料进行学习，这里主要介绍在linux系统中，进程是如何表示的，作为学习后个笔记。</p>
+
+<p>Linux内核涉及进程和程序的所有算法都围绕一个名为task_struct的数据结构建立，该结构定义在内核源码的include/sched.h文件中。task_struct是一个结构体，包含非常多的成员，其完整结构体如下：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+<span class='line-number'>153</span>
+<span class='line-number'>154</span>
+<span class='line-number'>155</span>
+<span class='line-number'>156</span>
+<span class='line-number'>157</span>
+<span class='line-number'>158</span>
+<span class='line-number'>159</span>
+<span class='line-number'>160</span>
+<span class='line-number'>161</span>
+<span class='line-number'>162</span>
+<span class='line-number'>163</span>
+<span class='line-number'>164</span>
+<span class='line-number'>165</span>
+<span class='line-number'>166</span>
+<span class='line-number'>167</span>
+<span class='line-number'>168</span>
+<span class='line-number'>169</span>
+<span class='line-number'>170</span>
+<span class='line-number'>171</span>
+<span class='line-number'>172</span>
+<span class='line-number'>173</span>
+<span class='line-number'>174</span>
+<span class='line-number'>175</span>
+<span class='line-number'>176</span>
+<span class='line-number'>177</span>
+<span class='line-number'>178</span>
+<span class='line-number'>179</span>
+<span class='line-number'>180</span>
+<span class='line-number'>181</span>
+<span class='line-number'>182</span>
+<span class='line-number'>183</span>
+<span class='line-number'>184</span>
+<span class='line-number'>185</span>
+<span class='line-number'>186</span>
+<span class='line-number'>187</span>
+<span class='line-number'>188</span>
+<span class='line-number'>189</span>
+<span class='line-number'>190</span>
+<span class='line-number'>191</span>
+<span class='line-number'>192</span>
+<span class='line-number'>193</span>
+<span class='line-number'>194</span>
+<span class='line-number'>195</span>
+<span class='line-number'>196</span>
+<span class='line-number'>197</span>
+<span class='line-number'>198</span>
+<span class='line-number'>199</span>
+<span class='line-number'>200</span>
+<span class='line-number'>201</span>
+<span class='line-number'>202</span>
+<span class='line-number'>203</span>
+<span class='line-number'>204</span>
+<span class='line-number'>205</span>
+<span class='line-number'>206</span>
+<span class='line-number'>207</span>
+<span class='line-number'>208</span>
+<span class='line-number'>209</span>
+<span class='line-number'>210</span>
+<span class='line-number'>211</span>
+<span class='line-number'>212</span>
+<span class='line-number'>213</span>
+<span class='line-number'>214</span>
+<span class='line-number'>215</span>
+<span class='line-number'>216</span>
+<span class='line-number'>217</span>
+<span class='line-number'>218</span>
+<span class='line-number'>219</span>
+<span class='line-number'>220</span>
+<span class='line-number'>221</span>
+<span class='line-number'>222</span>
+<span class='line-number'>223</span>
+<span class='line-number'>224</span>
+<span class='line-number'>225</span>
+<span class='line-number'>226</span>
+<span class='line-number'>227</span>
+<span class='line-number'>228</span>
+<span class='line-number'>229</span>
+<span class='line-number'>230</span>
+<span class='line-number'>231</span>
+<span class='line-number'>232</span>
+<span class='line-number'>233</span>
+<span class='line-number'>234</span>
+<span class='line-number'>235</span>
+<span class='line-number'>236</span>
+<span class='line-number'>237</span>
+<span class='line-number'>238</span>
+<span class='line-number'>239</span>
+<span class='line-number'>240</span>
+<span class='line-number'>241</span>
+<span class='line-number'>242</span>
+<span class='line-number'>243</span>
+<span class='line-number'>244</span>
+<span class='line-number'>245</span>
+<span class='line-number'>246</span>
+<span class='line-number'>247</span>
+<span class='line-number'>248</span>
+<span class='line-number'>249</span>
+<span class='line-number'>250</span>
+<span class='line-number'>251</span>
+<span class='line-number'>252</span>
+<span class='line-number'>253</span>
+<span class='line-number'>254</span>
+<span class='line-number'>255</span>
+<span class='line-number'>256</span>
+<span class='line-number'>257</span>
+<span class='line-number'>258</span>
+<span class='line-number'>259</span>
+<span class='line-number'>260</span>
+<span class='line-number'>261</span>
+<span class='line-number'>262</span>
+<span class='line-number'>263</span>
+<span class='line-number'>264</span>
+<span class='line-number'>265</span>
+<span class='line-number'>266</span>
+<span class='line-number'>267</span>
+<span class='line-number'>268</span>
+<span class='line-number'>269</span>
+<span class='line-number'>270</span>
+<span class='line-number'>271</span>
+<span class='line-number'>272</span>
+<span class='line-number'>273</span>
+<span class='line-number'>274</span>
+<span class='line-number'>275</span>
+<span class='line-number'>276</span>
+<span class='line-number'>277</span>
+<span class='line-number'>278</span>
+<span class='line-number'>279</span>
+<span class='line-number'>280</span>
+<span class='line-number'>281</span>
+<span class='line-number'>282</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'>    <span class="k">struct</span> <span class="n">task_struct</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">volatile</span> <span class="kt">long</span> <span class="n">state</span><span class="p">;</span>   <span class="cm">/* 进程状态：-1 表示不可运行, 0 表示可运行, &gt;0 表示停止 */</span>
+</span><span class='line'>      <span class="kt">void</span> <span class="o">*</span><span class="n">stack</span><span class="p">;</span>  <span class="cm">/* 进程内核栈*/</span>
+</span><span class='line'>      <span class="n">atomic_t</span> <span class="n">usage</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* </span>
+</span><span class='line'><span class="cm">       每个进程当前的状态标志：</span>
+</span><span class='line'><span class="cm">       0x00000002 表示进程正在在被创建</span>
+</span><span class='line'><span class="cm">       0x00000004 表示进程正准备退出</span>
+</span><span class='line'><span class="cm">       0x00000040 表示此进程被fork系统调用创建，但并没有执行exec</span>
+</span><span class='line'><span class="cm">       0x00000400 表示此进程由于其它进行发送相关信号矶被杀死 </span>
+</span><span class='line'><span class="cm">      */</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span>   
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">ptrace</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">lock_depth</span><span class="p">;</span>       <span class="cm">/* 大内核锁深度 */</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_SMP</span>
+</span><span class='line'>      <span class="cp">#ifdef __ARCH_WANT_UNLOCKED_CTXSW</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">oncpu</span><span class="p">;</span>  <span class="cm">/* 指示进程运行的CPU */</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cm">/* </span>
+</span><span class='line'><span class="cm">          * static_prio是表态优先级，也就是进程启动时分配的优先级</span>
+</span><span class='line'><span class="cm">          * prio,normal_prio是动态优先级 </span>
+</span><span class='line'><span class="cm">          */</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">prio</span><span class="p">,</span> <span class="n">static_prio</span><span class="p">,</span> <span class="n">normal_prio</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* run_list是一个表头，用于维护包含各进程的一个运行表*/</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">run_list</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">const</span> <span class="k">struct</span> <span class="n">sched_class</span> <span class="o">*</span><span class="n">sched_class</span><span class="p">;</span> <span class="cm">/*表示该进程所属的调用器类*/</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">sched_entity</span> <span class="n">se</span><span class="p">;</span> <span class="cm">/* 调度实体*/</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_PREEMPT_NOTIFIERS</span>
+</span><span class='line'>      <span class="cm">/* 结构体preempt_notifier链表，与抢占有关*/</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">hlist_head</span> <span class="n">preempt_notifiers</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">ioprio</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/*</span>
+</span><span class='line'><span class="cm">     fpu_counter 包含了浮点运算单元用到的上下文切换</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">fpu_counter</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">s8</span> <span class="n">oomkilladj</span><span class="p">;</span> <span class="cm">/* OOM kill score adjustment (bit shift). */</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_BLK_DEV_IO_TRACE</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">btrace_seq</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/*</span>
+</span><span class='line'><span class="cm">      * policy保存了对该进程应用的调度策略，有5个可能的值</span>
+</span><span class='line'><span class="cm">      * SCHED_NORMAL 用于普通进程，通过完全公平调度器来处理。</span>
+</span><span class='line'><span class="cm">      * SCHED_BATCH和SCHED_IDLE 也通过完全公平调度器来处理，不过用于次要的进程。</span>
+</span><span class='line'><span class="cm">      * SCHED_BATCH用于交互，CPU使用密集的批处理进程。</span>
+</span><span class='line'><span class="cm">      * SCHED_RR和SCHED_FIFO用于实现软实时进程，SCHED_RR实现了一种循环方法，而SCHED_FIFO则使用先进先出机制。</span>
+</span><span class='line'><span class="cm">      */</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">policy</span><span class="p">;</span>  <span class="cm">/* 高度策略 */</span>
+</span><span class='line'>      <span class="cm">/*cpus_allowed是一个位域，在多处理品系统上使用，用来限制进程可以在哪些CPU上运行*/</span>
+</span><span class='line'>      <span class="n">cpumask_t</span> <span class="n">cpus_allowed</span><span class="p">;</span> <span class="cm">/* 多核体系结构中管理CPU的位图*/</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">time_slice</span><span class="p">;</span> <span class="cm">/*指定进程可使用CPU的剩余时间段*/</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cp">#if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">sched_info</span> <span class="n">sched_info</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">tasks</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/*</span>
+</span><span class='line'><span class="cm">     * ptrace_list/ptrace_children forms the list of my children</span>
+</span><span class='line'><span class="cm">     * that were stolen by a ptracer.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">ptrace_children</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">ptrace_list</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">mm_struct</span> <span class="o">*</span><span class="n">mm</span><span class="p">,</span> <span class="o">*</span><span class="n">active_mm</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/* task state */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">linux_binfmt</span> <span class="o">*</span><span class="n">binfmt</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">exit_state</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">exit_code</span><span class="p">,</span> <span class="n">exit_signal</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">pdeath_signal</span><span class="p">;</span>  <span class="cm">/*  The signal sent when the parent dies  */</span>
+</span><span class='line'>      <span class="cm">/* ??? */</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">personality</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="n">did_exec</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">pid_t</span> <span class="n">pid</span><span class="p">;</span> <span class="cm">/* 全局进程ID*/</span>
+</span><span class='line'>      <span class="n">pid_t</span> <span class="n">tgid</span><span class="p">;</span> <span class="cm">/* 局部进程ID*/</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_CC_STACKPROTECTOR</span>
+</span><span class='line'>      <span class="cm">/* Canary value for the -fstack-protector gcc feature */</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">stack_canary</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cm">/* </span>
+</span><span class='line'><span class="cm">     * pointers to (original) parent process, youngest child, younger sibling,</span>
+</span><span class='line'><span class="cm">     * older sibling, respectively.  (p-&gt;father can be replaced with </span>
+</span><span class='line'><span class="cm">     * p-&gt;parent-&gt;pid)</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">task_struct</span> <span class="o">*</span><span class="n">real_parent</span><span class="p">;</span> <span class="cm">/* real parent process (when being debugged) */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">task_struct</span> <span class="o">*</span><span class="n">parent</span><span class="p">;</span>  <span class="cm">/* parent process */</span>
+</span><span class='line'>      <span class="cm">/*</span>
+</span><span class='line'><span class="cm">     * children/sibling forms the list of my children plus the</span>
+</span><span class='line'><span class="cm">     * tasks I&#39;m ptracing.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">children</span><span class="p">;</span>  <span class="cm">/* list of my children */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">sibling</span><span class="p">;</span>   <span class="cm">/* linkage in my parent&#39;s children list */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">task_struct</span> <span class="o">*</span><span class="n">group_leader</span><span class="p">;</span>    <span class="cm">/* threadgroup leader */</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/* PID/PID hash table linkage. */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">pid_link</span> <span class="n">pids</span><span class="p">[</span><span class="n">PIDTYPE_MAX</span><span class="p">];</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">thread_group</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">completion</span> <span class="o">*</span><span class="n">vfork_done</span><span class="p">;</span>       <span class="cm">/* for vfork() */</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">__user</span> <span class="o">*</span><span class="n">set_child_tid</span><span class="p">;</span>      <span class="cm">/* CLONE_CHILD_SETTID */</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">__user</span> <span class="o">*</span><span class="n">clear_child_tid</span><span class="p">;</span>        <span class="cm">/* CLONE_CHILD_CLEARTID */</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/*</span>
+</span><span class='line'><span class="cm">      *表示实时进程的优先级，最低的实时优先级为0，最高的优先级是99。值越大，表明优先级越高，不同于nice值</span>
+</span><span class='line'><span class="cm">      */</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">rt_priority</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">cputime_t</span> <span class="n">utime</span><span class="p">,</span> <span class="n">stime</span><span class="p">,</span> <span class="n">utimescaled</span><span class="p">,</span> <span class="n">stimescaled</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">cputime_t</span> <span class="n">gtime</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">cputime_t</span> <span class="n">prev_utime</span><span class="p">,</span> <span class="n">prev_stime</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">nvcsw</span><span class="p">,</span> <span class="n">nivcsw</span><span class="p">;</span> <span class="cm">/* context switch counts */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">timespec</span> <span class="n">start_time</span><span class="p">;</span>         <span class="cm">/* monotonic time */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">timespec</span> <span class="n">real_start_time</span><span class="p">;</span>    <span class="cm">/* boot based time */</span>
+</span><span class='line'>      <span class="cm">/* mm fault and swap info: this can arguably be seen as either mm-specific or thread-specific */</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">min_flt</span><span class="p">,</span> <span class="n">maj_flt</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="n">cputime_t</span> <span class="n">it_prof_expires</span><span class="p">,</span> <span class="n">it_virt_expires</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">it_sched_expires</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">cpu_timers</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/* process credentials */</span>
+</span><span class='line'>      <span class="n">uid_t</span> <span class="n">uid</span><span class="p">,</span><span class="n">euid</span><span class="p">,</span><span class="n">suid</span><span class="p">,</span><span class="n">fsuid</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">gid_t</span> <span class="n">gid</span><span class="p">,</span><span class="n">egid</span><span class="p">,</span><span class="n">sgid</span><span class="p">,</span><span class="n">fsgid</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">group_info</span> <span class="o">*</span><span class="n">group_info</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">kernel_cap_t</span>   <span class="n">cap_effective</span><span class="p">,</span> <span class="n">cap_inheritable</span><span class="p">,</span> <span class="n">cap_permitted</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="n">keep_capabilities</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">user_struct</span> <span class="o">*</span><span class="n">user</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_KEYS</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">key</span> <span class="o">*</span><span class="n">request_key_auth</span><span class="p">;</span>    <span class="cm">/* assumed request_key authority */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">key</span> <span class="o">*</span><span class="n">thread_keyring</span><span class="p">;</span>  <span class="cm">/* keyring private to this thread */</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">jit_keyring</span><span class="p">;</span>    <span class="cm">/* default keyring to attach requested keys to */</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="kt">char</span> <span class="n">comm</span><span class="p">[</span><span class="n">TASK_COMM_LEN</span><span class="p">];</span> <span class="cm">/* executable name excluding path</span>
+</span><span class='line'><span class="cm">                  - access with [gs]et_task_comm (which lock</span>
+</span><span class='line'><span class="cm">                    it with task_lock())</span>
+</span><span class='line'><span class="cm">                  - initialized normally by flush_old_exec */</span>
+</span><span class='line'>      <span class="cm">/* file system info */</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">link_count</span><span class="p">,</span> <span class="n">total_link_count</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_SYSVIPC</span>
+</span><span class='line'>      <span class="cm">/* ipc stuff */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">sysv_sem</span> <span class="n">sysvsem</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cm">/* CPU-specific state of this task */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">thread_struct</span> <span class="kr">thread</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* filesystem information */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">fs_struct</span> <span class="o">*</span><span class="n">fs</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* open file information */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">files_struct</span> <span class="o">*</span><span class="n">files</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* namespaces */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">nsproxy</span> <span class="o">*</span><span class="n">nsproxy</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* signal handlers */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">signal_struct</span> <span class="o">*</span><span class="n">signal</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">sighand_struct</span> <span class="o">*</span><span class="n">sighand</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">sigset_t</span> <span class="n">blocked</span><span class="p">,</span> <span class="n">real_blocked</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">sigset_t</span> <span class="n">saved_sigmask</span><span class="p">;</span>        <span class="cm">/* To be restored with TIF_RESTORE_SIGMASK */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">sigpending</span> <span class="n">pending</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">sas_ss_sp</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">size_t</span> <span class="n">sas_ss_size</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">notifier</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">priv</span><span class="p">);</span>
+</span><span class='line'>      <span class="kt">void</span> <span class="o">*</span><span class="n">notifier_data</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">sigset_t</span> <span class="o">*</span><span class="n">notifier_mask</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_SECURITY</span>
+</span><span class='line'>      <span class="kt">void</span> <span class="o">*</span><span class="n">security</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">audit_context</span> <span class="o">*</span><span class="n">audit_context</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">seccomp_t</span> <span class="n">seccomp</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/* Thread group tracking */</span>
+</span><span class='line'>          <span class="n">u32</span> <span class="n">parent_exec_id</span><span class="p">;</span>
+</span><span class='line'>          <span class="n">u32</span> <span class="n">self_exec_id</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* Protection of (de-)allocation: mm, files, fs, tty, keyrings */</span>
+</span><span class='line'>      <span class="n">spinlock_t</span> <span class="n">alloc_lock</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/* Protection of the PI data structures: */</span>
+</span><span class='line'>      <span class="n">spinlock_t</span> <span class="n">pi_lock</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_RT_MUTEXES</span>
+</span><span class='line'>      <span class="cm">/* PI waiters blocked on a rt_mutex held by this task */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">plist_head</span> <span class="n">pi_waiters</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* Deadlock detection and priority inheritance handling */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">rt_mutex_waiter</span> <span class="o">*</span><span class="n">pi_blocked_on</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_DEBUG_MUTEXES</span>
+</span><span class='line'>      <span class="cm">/* mutex deadlock detection */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">mutex_waiter</span> <span class="o">*</span><span class="n">blocked_on</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_TRACE_IRQFLAGS</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">irq_events</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">hardirqs_enabled</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">hardirq_enable_ip</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">hardirq_enable_event</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">hardirq_disable_ip</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">hardirq_disable_event</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">softirqs_enabled</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">softirq_disable_ip</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">softirq_disable_event</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">softirq_enable_ip</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">softirq_enable_event</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">hardirq_context</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">softirq_context</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_LOCKDEP</span>
+</span><span class='line'>      <span class="cp"># define MAX_LOCK_DEPTH 30UL</span>
+</span><span class='line'>      <span class="n">u64</span> <span class="n">curr_chain_key</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">lockdep_depth</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">held_lock</span> <span class="n">held_locks</span><span class="p">[</span><span class="n">MAX_LOCK_DEPTH</span><span class="p">];</span>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">lockdep_recursion</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/* journalling filesystem info */</span>
+</span><span class='line'>      <span class="kt">void</span> <span class="o">*</span><span class="n">journal_info</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/* stacked block device info */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">bio</span> <span class="o">*</span><span class="n">bio_list</span><span class="p">,</span> <span class="o">**</span><span class="n">bio_tail</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/* VM state */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">reclaim_state</span> <span class="o">*</span><span class="n">reclaim_state</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">backing_dev_info</span> <span class="o">*</span><span class="n">backing_dev_info</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">io_context</span> <span class="o">*</span><span class="n">io_context</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">ptrace_message</span><span class="p">;</span>
+</span><span class='line'>      <span class="n">siginfo_t</span> <span class="o">*</span><span class="n">last_siginfo</span><span class="p">;</span> <span class="cm">/* For ptrace use.  */</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_TASK_XACCT</span>
+</span><span class='line'>      <span class="cm">/* i/o counters(bytes read/written, #syscalls */</span>
+</span><span class='line'>      <span class="n">u64</span> <span class="n">rchar</span><span class="p">,</span> <span class="n">wchar</span><span class="p">,</span> <span class="n">syscr</span><span class="p">,</span> <span class="n">syscw</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">task_io_accounting</span> <span class="n">ioac</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#if defined(CONFIG_TASK_XACCT)</span>
+</span><span class='line'>      <span class="n">u64</span> <span class="n">acct_rss_mem1</span><span class="p">;</span> <span class="cm">/* accumulated rss usage */</span>
+</span><span class='line'>      <span class="n">u64</span> <span class="n">acct_vm_mem1</span><span class="p">;</span>  <span class="cm">/* accumulated virtual memory usage */</span>
+</span><span class='line'>      <span class="n">cputime_t</span> <span class="n">acct_stimexpd</span><span class="p">;</span><span class="cm">/* stime since last update */</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_NUMA</span>
+</span><span class='line'>          <span class="k">struct</span> <span class="n">mempolicy</span> <span class="o">*</span><span class="n">mempolicy</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">short</span> <span class="n">il_next</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_CPUSETS</span>
+</span><span class='line'>      <span class="n">nodemask_t</span> <span class="n">mems_allowed</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">cpuset_mems_generation</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">cpuset_mem_spread_rotor</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_CGROUPS</span>
+</span><span class='line'>      <span class="cm">/* Control Group info protected by css_set_lock */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">css_set</span> <span class="o">*</span><span class="n">cgroups</span><span class="p">;</span>
+</span><span class='line'>      <span class="cm">/* cg_list protected by css_set_lock and tsk-&gt;alloc_lock */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">cg_list</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_FUTEX</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">robust_list_head</span> <span class="n">__user</span> <span class="o">*</span><span class="n">robust_list</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_COMPAT</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">compat_robust_list_head</span> <span class="n">__user</span> <span class="o">*</span><span class="n">compat_robust_list</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">list_head</span> <span class="n">pi_state_list</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">futex_pi_state</span> <span class="o">*</span><span class="n">pi_state_cache</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="n">atomic_t</span> <span class="n">fs_excl</span><span class="p">;</span>  <span class="cm">/* holding fs exclusive resources */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">rcu_head</span> <span class="n">rcu</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="cm">/*</span>
+</span><span class='line'><span class="cm">     * cache last used pipe for splice</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">pipe_inode_info</span> <span class="o">*</span><span class="n">splice_pipe</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_TASK_DELAY_ACCT</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">task_delay_info</span> <span class="o">*</span><span class="n">delays</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="cp">#ifdef CONFIG_FAULT_INJECTION</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">make_it_fail</span><span class="p">;</span>
+</span><span class='line'>      <span class="cp">#endif</span>
+</span><span class='line'>      <span class="k">struct</span> <span class="n">prop_local_single</span> <span class="n">dirties</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[zookeeper源码分析(三)——类QuorumPeer的分析]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/"/>
+    <updated>2013-10-29T23:12:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi</id>
+    <content type="html"><![CDATA[<p>在Zookeeper中，类QuoromPeer处在非常重要的地位，它管理了quorum协议，并且包含以下三种状态：</p>
+
+<ol>
+<li>Leader选择：每个server都将选出一个leader（最初建议server自己为leader）。</li>
+<li>Follower：处于该状态的server将与leader进行同步，并且复制任务事务。</li>
+<li>Leader：处于leader状态的server处理请求，并转发给Follower。大部分Follower在接受请求之前必须将请求输出到日志中。</li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[如何使用urllib2获取网络资源]]></title>
@@ -60,6 +1659,94 @@
 <p>urllib的使用就如以上的方法那样简单（注意，除了使用http,我们也可以使用ftp协议，file等等。），然而本教程的目的是介绍更复杂的HTTP协议。</p>
 
 <p>HTTP协议包括请求和响应，客户端发出请求，而服务器响应请求。urllib.request代表了HTTP的请求对象，表示我们创建的服务请求。在最简单的形式中，首先创建一个Request对象，指定需要获取资源的URL，然后调用urlopen返回一个针对请求的响应对象，这处响应对象类似文件对象，也就是说，可以调用read函数获取响应的内容。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s">&#39;http://www.voidspace.org.uk&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urllopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">the_page</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>需要注意的是，urllib.request使用相同的请求接口来处理所有的URL方案。例如，可以使用以下的方式使用FTP请求：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s">&#39;ftp://example.com/&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在处理HTTP的情况下，请求对象允许你可以做额外的两件事：首先，可以将数据发送给服务器。其次你可以将与数据有关的其它信息（元数据）或者请求自身发送给服务器，这些信息通过设置HTTP头进行传输。让我们依次介绍这些内容。</p>
+
+<h4>2.1 数据</h4>
+
+<p>有时我们想向一个URL指定的地址发送数据（通常URL地址涉及一个CGI(公共网关接口)脚本或者其它的web应用程序）。在HTTP协议中，我们通常使用POST请求来完成这样的任务。当我们提交一个HTML表单时，浏览器通常使用POST请求，并非所有POST请求都来自表单。我们可以使用一个POST向我们的应用程序传输任意的数据。在HTML表单中，数据使用一种标准的方式进行编码，然后以参数的形式传给Request对象，在Python中，使用urllib.parse库来完成数据的编码。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   <span class="kn">import</span> <span class="nn">urllib.parse</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://www.someserver.com/cgi-bin/register.cgi&#39;</span>
+</span><span class='line'>  <span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;name&#39;</span> <span class="p">:</span> <span class="s">&#39;Michael Foord&#39;</span><span class="p">,</span>
+</span><span class='line'>             <span class="s">&#39;location&#39;</span> <span class="p">:</span> <span class="s">&#39;Northampton&#39;</span><span class="p">,</span>
+</span><span class='line'>             <span class="s">&#39;language&#39;</span> <span class="p">:</span> <span class="s">&#39;Python&#39;</span><span class="p">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">response</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">the_page</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>需要注意的是，有时候需要设置其它的编码方式（如上传文件的HTML表单——更多的介绍参见HTML规范中的表单提交）。</p>
+
+<p>如果不传递参数data，则urllib使用GET请求。GTE请求与POST请求之间存在区别，其中一个区别是POST请求往往存在副作用，它可以以某种方式改变系统的状态。尽管HTTP协议的标准制定者清楚知道POST请求总是会产生副作用，GET请求永远不会引起副作用，没有什么能够使GET请求生产副作用，也没有什么能够使用HOST请求无副作用。数据也可以在HTTP GET请求中，通过URL编码的方式进行传递。通过以下方式实现：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.parse</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Somebody Here&#39;</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Northhampton&#39;</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;language&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Python&#39;</span>
+</span><span class='line'>  <span class="n">url_values</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">print</span><span class="p">(</span><span class="n">url_values</span><span class="p">)</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://www.example.com/example.cgi&#39;</span>
+</span><span class='line'>  <span class="n">full_url</span><span class="o">=</span><span class="n">url</span> <span class="o">+</span> <span class="s">&quot;?&quot;</span> <span class="o">+</span> <span class="n">url_values</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">full_url</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>请注意，通过添加符号?并紧跟着编码好的值在其后的方式来创建完整的URL。</p>
 ]]></content>
   </entry>
   
@@ -771,6 +2458,10 @@ $
 \[u_1 ^TSu_1 = u_1 ^T\lambda_1u_1 = \lambda_1 u_1 ^Tu_1\]
 由$$$u_1 ^T u_1 = 1$$$可得\[u_1 ^TSu_1 = \lambda_1\]
 因此，当我们设置$$$u_1$$$等于矩阵$$$S$$$的最大特征值的特征向量时，方差可取得最大值。此时，$$$u_1$$$称为第一主成分特征向量。</p>
+
+<p>我们可以通过以增量的方式选择一个新的方向定义额外的主成分以使方差最大化，这些新选择的方向必须与已经选择的方向向量正交。假设我们考虑一个M维的投影空间，使方差最大化的最优线性投影为方差矩阵$$$S$$$的前M特征值对应的特征向量$$$u_1,&#8230;,u_M$$$，这个结论很容易使用前面的推导进行证明。</p>
+
+<p>总结一下，主成分分析涉及到计算数据的均值$$$\bar {x}$$$和方差矩阵$$$S$$$，然后计算方差矩阵$$$S$$$前M大特征值对应的特征向量。寻找特征向量和特征值，以及其它与特征向量有关的分解定理的算法，可以在Golub and Van Loan (1996)的文章中找到。</p>
 ]]></content>
   </entry>
   

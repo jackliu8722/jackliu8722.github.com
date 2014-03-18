@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: 机器学习 | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/ml/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2013-10-27T11:35:19+08:00</updated>
+  <updated>2014-03-18T11:22:04+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -76,6 +76,10 @@
 \[u_1 ^TSu_1 = u_1 ^T\lambda_1u_1 = \lambda_1 u_1 ^Tu_1\]
 由$$$u_1 ^T u_1 = 1$$$可得\[u_1 ^TSu_1 = \lambda_1\]
 因此，当我们设置$$$u_1$$$等于矩阵$$$S$$$的最大特征值的特征向量时，方差可取得最大值。此时，$$$u_1$$$称为第一主成分特征向量。</p>
+
+<p>我们可以通过以增量的方式选择一个新的方向定义额外的主成分以使方差最大化，这些新选择的方向必须与已经选择的方向向量正交。假设我们考虑一个M维的投影空间，使方差最大化的最优线性投影为方差矩阵$$$S$$$的前M特征值对应的特征向量$$$u_1,...,u_M$$$，这个结论很容易使用前面的推导进行证明。</p>
+
+<p>总结一下，主成分分析涉及到计算数据的均值$$$\bar {x}$$$和方差矩阵$$$S$$$，然后计算方差矩阵$$$S$$$前M大特征值对应的特征向量。寻找特征向量和特征值，以及其它与特征向量有关的分解定理的算法，可以在Golub and Van Loan (1996)的文章中找到。</p>
 ]]></content>
   </entry>
   

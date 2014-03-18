@@ -5,11 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Zookeeper-源码分析(一)——简介 - 精神兵的 Blog</title>
+  <title>zookeeper源码分析(三)——类QuorumPeer的分析 - 精神兵的 Blog</title>
   <meta name="author" content="jackliu">
 
   
-  <meta name="description" content="Zookeeper是什么 Zookeeper是Hadoop的一个子项目，它是一个针对大型分布式系统的可靠协调系统，提供的功能包括：维护配置信息(maintaining configuration information)、名字服务(naming service)、分布式同步(distributed &hellip;">
+  <meta name="description" content="在Zookeeper中，类QuoromPeer处在非常重要的地位，它管理了quorum协议，并且包含以下三种状态： Leader选择：每个server都将选出一个leader（最初建议server自己为leader）。
+Follower：处于该状态的server将与leader进行同步， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jackliu8722.github.com/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/">
+  <link rel="canonical" href="http://jackliu8722.github.com/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -107,7 +108,7 @@
   
   <header>
     
-      <h1 class="entry-title">Zookeeper-源码分析(一)——简介</h1>
+      <h1 class="entry-title">zookeeper源码分析(三)——类QuorumPeer的分析</h1>
     
     
       <p class="meta">
@@ -123,18 +124,21 @@
   
 
 
-<time datetime="2013-10-09T23:10:00+08:00" pubdate data-updated="true">2013年10月09日</time>
+<time datetime="2013-10-29T23:12:00+08:00" pubdate data-updated="true">2013年10月29日</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><h2>Zookeeper是什么</h2>
+<div class="entry-content"><p>在Zookeeper中，类QuoromPeer处在非常重要的地位，它管理了quorum协议，并且包含以下三种状态：</p>
 
-<p>Zookeeper是Hadoop的一个子项目，它是一个针对大型分布式系统的可靠协调系统，提供的功能包括：维护配置信息(maintaining configuration information)、名字服务(naming service)、分布式同步(distributed synchronization)、组服务(group services)等等，以上的服务经常应用在分布式系统当中。</p>
+<ol>
+<li>Leader选择：每个server都将选出一个leader（最初建议server自己为leader）。</li>
+<li>Follower：处于该状态的server将与leader进行同步，并且复制任务事务。</li>
+<li>Leader：处于leader状态的server处理请求，并转发给Follower。大部分Follower在接受请求之前必须将请求输出到日志中。</li>
+</ol>
 
-<p>Zookeeper的目标是封装好复杂并易出错的关键服务，将简单易用的接口和性能高效、功能稳定的系统提供给用户，从而降低用户实现分布式系统的难度。</p>
 </div>
 
 
@@ -157,7 +161,7 @@
   
 
 
-<time datetime="2013-10-09T23:10:00+08:00" pubdate data-updated="true">2013年10月09日</time>
+<time datetime="2013-10-29T23:12:00+08:00" pubdate data-updated="true">2013年10月29日</time>
       
 
 <span class="categories">
@@ -204,10 +208,10 @@ var jiathis_config = {data_track_clickback:'true'};
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/" title="Previous Post: 在Octopress中显示数学公式">&laquo; 在Octopress中显示数学公式</a>
+        <a class="basic-alignment left" href="/blog/2013/10/26/urllib2-with-python/" title="Previous Post: 如何使用urllib2获取网络资源">&laquo; 如何使用urllib2获取网络资源</a>
       
       
-        <a class="basic-alignment right" href="/blog/2013/10/16/pca/" title="Next Post: 主成份分析(PCA)">主成份分析(PCA) &raquo;</a>
+        <a class="basic-alignment right" href="/blog/2013/11/07/linux-kernel-001/" title="Next Post: linux源码分析之进程表示">linux源码分析之进程表示 &raquo;</a>
       
     </p>
   </footer>

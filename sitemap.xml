@@ -30,7 +30,7 @@
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/10/16/pca/</loc>
-        <lastmod>2013-10-27T11:34:11+08:00</lastmod>
+        <lastmod>2013-10-29T08:58:56+08:00</lastmod>
     </url>
     <url>
         <loc>
@@ -50,7 +50,21 @@
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/10/26/urllib2-with-python/</loc>
-        <lastmod>2013-10-26T19:59:18+08:00</lastmod>
+        <lastmod>2013-11-23T17:58:01+08:00</lastmod>
+    </url>
+    <url>
+        <loc>
+            http://jackliu8722.github.com/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/
+        </loc>
+        <lastmod>2013-10-29T23:37:12+08:00</lastmod>
+    </url>
+    <url>
+        <loc>http://jackliu8722.github.com/blog/2013/11/07/linux-kernel-001/</loc>
+        <lastmod>2013-11-19T09:00:06+08:00</lastmod>
+    </url>
+    <url>
+        <loc>http://jackliu8722.github.com/blog/2013/11/08/zookeeper-java-example/</loc>
+        <lastmod>2013-11-10T21:44:45+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/about/</loc>
@@ -58,10 +72,10 @@
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/archives/</loc>
-        <lastmod>2013-10-27T11:34:11+08:00</lastmod>
+        <lastmod>2013-11-23T17:58:01+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/</loc>
-        <lastmod>2013-10-27T11:34:11+08:00</lastmod>
+        <lastmod>2013-11-23T17:58:01+08:00</lastmod>
     </url>
 </urlset>

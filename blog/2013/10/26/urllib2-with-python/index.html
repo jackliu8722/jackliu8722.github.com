@@ -172,6 +172,94 @@
 <p>urllib的使用就如以上的方法那样简单（注意，除了使用http,我们也可以使用ftp协议，file等等。），然而本教程的目的是介绍更复杂的HTTP协议。</p>
 
 <p>HTTP协议包括请求和响应，客户端发出请求，而服务器响应请求。urllib.request代表了HTTP的请求对象，表示我们创建的服务请求。在最简单的形式中，首先创建一个Request对象，指定需要获取资源的URL，然后调用urlopen返回一个针对请求的响应对象，这处响应对象类似文件对象，也就是说，可以调用read函数获取响应的内容。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s">&#39;http://www.voidspace.org.uk&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urllopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">the_page</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>需要注意的是，urllib.request使用相同的请求接口来处理所有的URL方案。例如，可以使用以下的方式使用FTP请求：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s">&#39;ftp://example.com/&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在处理HTTP的情况下，请求对象允许你可以做额外的两件事：首先，可以将数据发送给服务器。其次你可以将与数据有关的其它信息（元数据）或者请求自身发送给服务器，这些信息通过设置HTTP头进行传输。让我们依次介绍这些内容。</p>
+
+<h4>2.1 数据</h4>
+
+<p>有时我们想向一个URL指定的地址发送数据（通常URL地址涉及一个CGI(公共网关接口)脚本或者其它的web应用程序）。在HTTP协议中，我们通常使用POST请求来完成这样的任务。当我们提交一个HTML表单时，浏览器通常使用POST请求，并非所有POST请求都来自表单。我们可以使用一个POST向我们的应用程序传输任意的数据。在HTML表单中，数据使用一种标准的方式进行编码，然后以参数的形式传给Request对象，在Python中，使用urllib.parse库来完成数据的编码。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   <span class="kn">import</span> <span class="nn">urllib.parse</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://www.someserver.com/cgi-bin/register.cgi&#39;</span>
+</span><span class='line'>  <span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;name&#39;</span> <span class="p">:</span> <span class="s">&#39;Michael Foord&#39;</span><span class="p">,</span>
+</span><span class='line'>             <span class="s">&#39;location&#39;</span> <span class="p">:</span> <span class="s">&#39;Northampton&#39;</span><span class="p">,</span>
+</span><span class='line'>             <span class="s">&#39;language&#39;</span> <span class="p">:</span> <span class="s">&#39;Python&#39;</span><span class="p">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">response</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">the_page</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>需要注意的是，有时候需要设置其它的编码方式（如上传文件的HTML表单——更多的介绍参见HTML规范中的表单提交）。</p>
+
+<p>如果不传递参数data，则urllib使用GET请求。GTE请求与POST请求之间存在区别，其中一个区别是POST请求往往存在副作用，它可以以某种方式改变系统的状态。尽管HTTP协议的标准制定者清楚知道POST请求总是会产生副作用，GET请求永远不会引起副作用，没有什么能够使GET请求生产副作用，也没有什么能够使用HOST请求无副作用。数据也可以在HTTP GET请求中，通过URL编码的方式进行传递。通过以下方式实现：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.parse</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Somebody Here&#39;</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Northhampton&#39;</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;language&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Python&#39;</span>
+</span><span class='line'>  <span class="n">url_values</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">print</span><span class="p">(</span><span class="n">url_values</span><span class="p">)</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://www.example.com/example.cgi&#39;</span>
+</span><span class='line'>  <span class="n">full_url</span><span class="o">=</span><span class="n">url</span> <span class="o">+</span> <span class="s">&quot;?&quot;</span> <span class="o">+</span> <span class="n">url_values</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">full_url</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>请注意，通过添加符号?并紧跟着编码好的值在其后的方式来创建完整的URL。</p>
 </div>
 
 
@@ -244,6 +332,8 @@ var jiathis_config = {data_track_clickback:'true'};
         <a class="basic-alignment left" href="/blog/2013/10/21/writing-an-ice-application-with-java/" title="Previous Post: 用Java实现一个ICE应用">&laquo; 用Java实现一个ICE应用</a>
       
       
+        <a class="basic-alignment right" href="/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/" title="Next Post: zookeeper源码分析(三)——类QuorumPeer的分析">zookeeper源码分析(三)——类QuorumPeer的分析 &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -256,10 +346,11 @@ var jiathis_config = {data_track_clickback:'true'};
 <section>
 <h1>博客分类</h1>
 <ul>
-  <li><a href='/blog/categories/linux/'>Linux (1)</a></li>
+  <li><a href='/blog/categories/java/'>Java (1)</a></li>
+  <li><a href='/blog/categories/linux/'>Linux (2)</a></li>
   <li><a href='/blog/categories/Python/'>Python (1)</a></li>
   <li><a href='/blog/categories/others/'>其它 (3)</a></li>
-  <li><a href='/blog/categories/distributed/'>分布式 (4)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (6)</a></li>
   <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
 </ul>
 </section>
@@ -269,23 +360,23 @@ var jiathis_config = {data_track_clickback:'true'};
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2013/11/08/zookeeper-java-example/">Zookeeper之java实例</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/11/07/linux-kernel-001/">linux源码分析之进程表示</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/">zookeeper源码分析(三)——类QuorumPeer的分析</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2013/10/26/urllib2-with-python/">如何使用urllib2获取网络资源</a>
       </li>
     
       <li class="post">
         <a href="/blog/2013/10/21/writing-an-ice-application-with-java/">用Java实现一个ICE应用</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/20/ice-chat-demo/">ICE Chat Demo(中文翻译)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/">Zookeeper-源码分析(二)——Server启动流程</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/16/pca/">主成份分析(PCA)</a>
       </li>
     
   </ul>
@@ -335,7 +426,7 @@ var jiathis_config = {data_track_clickback:'true'};
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2013 - jackliu -
+  Copyright &copy; 2014 - jackliu -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
