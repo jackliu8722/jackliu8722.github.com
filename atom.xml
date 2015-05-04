@@ -4,7 +4,7 @@
   <title><![CDATA[精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2014-03-18T11:22:04+08:00</updated>
+  <updated>2015-05-04T22:14:19+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -12,6 +12,48 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Cassandra架构与源码分析(一)]]></title>
+    <link href="http://jackliu8722.github.com/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/"/>
+    <updated>2014-03-18T23:38:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01</id>
+    <content type="html"><![CDATA[<h3>Cassandra是什么</h3>
+
+<p>随着互联网的蓬勃发展，NoSQL数据库风生水起，涌现出了非常多的非关系数据库，比较火的有MongoDB,HBase，Cassandra等，我们这里主要讲Cassandra，那它是怎么样的一个NoSQL数据库呢？</p>
+
+<p>Cassandra是一套混合型的非关系KV数据库系统，类似于Google的BigTable。大家应该知道Amazon的Dynamo分布式系统吧(不了解的可以google一下)，Cassandra的功能比Dynamo更丰富，但支持度却不如文档存储系统MongoDB。Cassandra最初由Facebook开发，后来转变成了一个开源项目。它是一个网络社交云计算方面理想的数据库。以Amazon专有的完全分布式的Dynamo为基础，并结合了Google的基于列族数据模型的Bigtable，是一个完全P2P去中心化的存储系统。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Merkle Tree]]></title>
+    <link href="http://jackliu8722.github.com/blog/2014/03/18/merkle-tree/"/>
+    <updated>2014-03-18T11:32:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2014/03/18/merkle-tree</id>
+    <content type="html"><![CDATA[<h3>什么是Merkle Tree</h3>
+
+<p>Merkle Tree是一种树，并且该树所有节点存储的都是hash值，因此网上大都把Merkle Tree又称为Merkle Hash Tree。Merkle Tree具有以下的特点：</p>
+
+<ol>
+<li>Merkle Tree是一种树，并且具有树的所有特点，可以是二叉树也可是多叉树；</li>
+<li>Merkle Tree的叶子节点存储的value由设计者指定，可以存储具体的数据，也可以存储数据的hash值；</li>
+<li>Merkle Tree非叶子的value存储的其所有子节点的hash值，计算hash值的算法由设计者制定；</li>
+</ol>
+
+
+<p>下图是Merkle Tree的一个例子
+<img class="center" src="http://jackliu8722.github.com/images/merkle-tree.png"></p>
+
+<p>根据上图的一棵Merkle Tree，可以得到如下的结果：</p>
+
+<ol>
+<li>该Merkle Tree是一棵二叉树；</li>
+<li></li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Zookeeper之java实例]]></title>

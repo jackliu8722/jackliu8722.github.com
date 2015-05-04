@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: 分布式 | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/distributed/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2014-03-18T11:22:04+08:00</updated>
+  <updated>2015-05-04T22:14:19+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -12,6 +12,48 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Cassandra架构与源码分析(一)]]></title>
+    <link href="http://jackliu8722.github.com/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/"/>
+    <updated>2014-03-18T23:38:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01</id>
+    <content type="html"><![CDATA[<h3>Cassandra是什么</h3>
+
+<p>随着互联网的蓬勃发展，NoSQL数据库风生水起，涌现出了非常多的非关系数据库，比较火的有MongoDB,HBase，Cassandra等，我们这里主要讲Cassandra，那它是怎么样的一个NoSQL数据库呢？</p>
+
+<p>Cassandra是一套混合型的非关系KV数据库系统，类似于Google的BigTable。大家应该知道Amazon的Dynamo分布式系统吧(不了解的可以google一下)，Cassandra的功能比Dynamo更丰富，但支持度却不如文档存储系统MongoDB。Cassandra最初由Facebook开发，后来转变成了一个开源项目。它是一个网络社交云计算方面理想的数据库。以Amazon专有的完全分布式的Dynamo为基础，并结合了Google的基于列族数据模型的Bigtable，是一个完全P2P去中心化的存储系统。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Merkle Tree]]></title>
+    <link href="http://jackliu8722.github.com/blog/2014/03/18/merkle-tree/"/>
+    <updated>2014-03-18T11:32:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2014/03/18/merkle-tree</id>
+    <content type="html"><![CDATA[<h3>什么是Merkle Tree</h3>
+
+<p>Merkle Tree是一种树，并且该树所有节点存储的都是hash值，因此网上大都把Merkle Tree又称为Merkle Hash Tree。Merkle Tree具有以下的特点：</p>
+
+<ol>
+<li>Merkle Tree是一种树，并且具有树的所有特点，可以是二叉树也可是多叉树；</li>
+<li>Merkle Tree的叶子节点存储的value由设计者指定，可以存储具体的数据，也可以存储数据的hash值；</li>
+<li>Merkle Tree非叶子的value存储的其所有子节点的hash值，计算hash值的算法由设计者制定；</li>
+</ol>
+
+
+<p>下图是Merkle Tree的一个例子
+<img class="center" src="/images/merkle-tree.png"></p>
+
+<p>根据上图的一棵Merkle Tree，可以得到如下的结果：</p>
+
+<ol>
+<li>该Merkle Tree是一棵二叉树；</li>
+<li></li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Zookeeper之java实例]]></title>
@@ -1519,311 +1561,6 @@ $
 
 <pre><code>$ export CLASSPATH=$CLASSPATH:./classes:$ICE_HOME/lib/Ice.jar
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[ICE Chat Demo(中文翻译)]]></title>
-    <link href="http://jackliu8722.github.com/blog/2013/10/20/ice-chat-demo/"/>
-    <updated>2013-10-20T10:36:00+08:00</updated>
-    <id>http://jackliu8722.github.com/blog/2013/10/20/ice-chat-demo</id>
-    <content type="html"><![CDATA[<h3>简介</h3>
-
-<p>ZeroC提供了一个简单的应用，该应用允许用户接入一个聊天室，并且与其它用户进行聊天。此聊天应用提出了一些有趣的设计，这些设计在开发一个分布式应用时，可能会成为我们面临的挑战，因此它是一个极好的案例研究。</p>
-
-<p>聊天应用使用C++实现了服务端，客户端可以使用不同的语言，图形化程序使用C#, Java和C++，控制台程序使用C++实现，而基于web的客户端程序使用Java(applet), PHP和ActionScript.应用程序的各个组成部分由下图所示，我们将在后面的章节中对这些组件进行详细地探讨。</p>
-
-<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-01.png"></p>
-
-<p>ZeroC提供了一个公共的聊天服务器，你可以通过以下几种方式使用它：</p>
-
-<ul>
-<li>通过浏览器使用PHP, Silverlight, Applet或者Flash客户端进行聊天。</li>
-<li>下载编译好的Java或者.Net图形客户端。</li>
-<li>使用ICE支持的语言自己实现一个客户端。</li>
-</ul>
-
-
-<p>如果你愿意，也可以下载完整的应用程序源代码，并在自己的系统上运行。</p>
-
-<p>点击下面的链接继续阅读我们的聊天应用程序的介绍。如果对更详细的讨论感兴趣，请参阅更详细的<a href="http://www.zeroc.com/chat/articles.html">技术文章</a>。</p>
-
-<h3>内容</h3>
-
-<h5>ICE是什么</h5>
-
-<p>ICE（Internet Communications Engine）是一个分布式计算平台。它支持多种操作系统，编译器和编程语言，并允许你创建异构的分布式应用程序。换句话说，ICE让您轻松地创建分布式应用程序，并且可以运行在不同的操作系统上，同时可以用不同的语言编写，ICE允许这些应用程序无缝地进行交互，如下图所示。</p>
-
-<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-02.png"></p>
-
-<h5>Slice</h5>
-
-<p>无论开发者使用什么语言来实现应用程序，一种称为Slice的规范语言可以为应用程序定义类和接口。然后，编译器将这种独立于语言的规范转换成特定语言的API。生成的API考虑到了许多通信细节，而这些通信细节实现起来往往是比较困难的，否则需要开发者自己去实现。下图显示了一个典型的ICE应用的C++工具链。</p>
-
-<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-03.png"></p>
-
-<h5>客户端和服务端</h5>
-
-<p>在其它的分布式系统中，ICE应用由客户端和服务端组成，并共同完成任务。术语客户端和服务端不是应用程序特定部分的固定设计模式，相反，它们表示应用程序请求的角色。</p>
-
-<ul>
-<li>客户端是主动的实体，发送服务请求到服务器。</li>
-<li>服务是被动的实体，响应客户端的请求并提供服务。</li>
-</ul>
-
-
-<p>从理论上来讲，一个服务器只响应请求，但不发送请求。同样地，一个客户端只发送请求但不提供服务，如下图所示。</p>
-
-<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-04.png"></p>
-
-<p>作为一个客户端和服务器程序，这是很常见的。例如，客户端可能在服务器上启动一个长时间运行的操作，作为启动操作的一部分，客户端可以向服务器提供一个回调操作，当启动操作完成后，服务器可以通过回调通知客户端，在此情况下，当客户端执行启动操作时，客户端充当客户端的角色，而当服务器通知操作完成时，客户端又充当服务器的角色，如下图所示。因此，通常将客户端-服务器系统描述为对等系统更为准确。</p>
-
-<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-05.png"></p>
-
-<h5>对象和代理</h5>
-
-<p>一个ICE对象是对一个本地或者远程实体的抽象，并且可以响应客户端请求。它有一个唯一的标识和表示对象支持的一些已命名的操作的接口，这些对象可以支持更多的接口。客户端通过调用对象的方法向服务器发送请求。</p>
-
-<p>一个代理是客户端用来访问ICE对象的句柄。除了代理代表远程地址空间的一个对象以外，你可以认为代理类似于C++中的指针或者Java中的引用。当客户端调用代理的一个方法时，ICE运行环境需要小心地定位对象，如果有必要，启动服务器实例化对象，并且在客户端和服务器之间传递参数。</p>
-
-<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-06.png"></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Zookeeper-源码分析(二)——Server启动流程]]></title>
-    <link href="http://jackliu8722.github.com/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/"/>
-    <updated>2013-10-16T08:23:00+08:00</updated>
-    <id>http://jackliu8722.github.com/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng</id>
-    <content type="html"><![CDATA[<p>Zookeeper中，server的启动入口为类org.apache.zookeeper.server.quorum.QuorumPeerMain的main方法，由zkServer.sh脚本调用。其main方法的内容如下：</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="n">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">QuorumPeerMain</span> <span class="n">main</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeerMain</span><span class="o">();</span>
-</span><span class='line'>    <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">main</span><span class="o">.</span><span class="na">initializeAndRun</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">IllegalArgumentException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Invalid arguments, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="n">USAGE</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">USAGE</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ConfigException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Invalid config, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;Invalid config, exiting abnormally&quot;</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">2</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">error</span><span class="o">(</span><span class="s">&quot;Unexpected exception, exiting abnormally&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
-</span><span class='line'>        <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>    <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Exiting normally&quot;</span><span class="o">);</span>
-</span><span class='line'>    <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>在main方法，调用了类QuorumPeerMain的initializeAndRun方法做后续的处理，其源码如下：</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">protected</span> <span class="kt">void</span> <span class="n">initializeAndRun</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span>
-</span><span class='line'>    <span class="kd">throws</span> <span class="n">ConfigException</span><span class="o">,</span> <span class="n">IOException</span>
-</span><span class='line'><span class="o">{</span>
-</span><span class='line'>    <span class="c1">//创建配置类</span>
-</span><span class='line'>    <span class="n">QuorumPeerConfig</span> <span class="n">config</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeerConfig</span><span class="o">();</span>
-</span><span class='line'>    <span class="c1">//如果只有一个参数，则调用配置类的parse方法解析配置文件</span>
-</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">config</span><span class="o">.</span><span class="na">parse</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="c1">// 启动并调度清理任务，定时清理数据目录下的数据</span>
-</span><span class='line'>    <span class="n">DatadirCleanupManager</span> <span class="n">purgeMgr</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DatadirCleanupManager</span><span class="o">(</span><span class="n">config</span>
-</span><span class='line'>            <span class="o">.</span><span class="na">getDataDir</span><span class="o">(),</span> <span class="n">config</span><span class="o">.</span><span class="na">getDataLogDir</span><span class="o">(),</span> <span class="n">config</span>
-</span><span class='line'>            <span class="o">.</span><span class="na">getSnapRetainCount</span><span class="o">(),</span> <span class="n">config</span><span class="o">.</span><span class="na">getPurgeInterval</span><span class="o">());</span>
-</span><span class='line'>    <span class="n">purgeMgr</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
-</span><span class='line'>    <span class="c1">//运行quorum模式</span>
-</span><span class='line'>    <span class="k">if</span> <span class="o">(</span><span class="n">args</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">&amp;</span><span class="n">amp</span><span class="o">;&amp;</span><span class="n">amp</span><span class="o">;</span> <span class="n">config</span><span class="o">.</span><span class="na">servers</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&amp;</span><span class="n">gt</span><span class="o">;</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>        <span class="n">runFromConfig</span><span class="o">(</span><span class="n">config</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-</span><span class='line'>        <span class="c1">//无配置文件，或者服务的数量为0，运行standalone模式</span>
-</span><span class='line'>        <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Either no config or no quorum defined in config, running &quot;</span>
-</span><span class='line'>                <span class="o">+</span> <span class="s">&quot; in standalone mode&quot;</span><span class="o">);</span>
-</span><span class='line'>        <span class="c1">// there is only server in the quorum -- run as standalone</span>
-</span><span class='line'>        <span class="n">ZooKeeperServerMain</span><span class="o">.</span><span class="na">main</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>在initializedAndRun方法中，zookeeper首先创建QuorumPeerConfig类解析配置文件，然后根据配置是否存在和server的数量选择运行的模式。如果无配置文件或者server的数量为1(即只有当前server)，则运行standalone模式，即代码中执行ZookeeperServerMain.main(args),否则以quorum模式运行，即以QuorumPeerConfig的实例为参数运行runFromConfig函数，其代码如下：</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kd">public</span> <span class="kt">void</span> <span class="n">runFromConfig</span><span class="o">(</span><span class="n">QuorumPeerConfig</span> <span class="n">config</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
-</span><span class='line'>  <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>      <span class="n">ManagedUtil</span><span class="o">.</span><span class="na">registerLog4jMBeans</span><span class="o">();</span>
-</span><span class='line'>  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">JMException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>      <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Unable to register log4j JMX control&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="n">LOG</span><span class="o">.</span><span class="na">info</span><span class="o">(</span><span class="s">&quot;Starting quorum peer&quot;</span><span class="o">);</span>
-</span><span class='line'>  <span class="k">try</span> <span class="o">{</span>
-</span><span class='line'>      <span class="n">ServerCnxnFactory</span> <span class="n">cnxnFactory</span> <span class="o">=</span> <span class="n">ServerCnxnFactory</span><span class="o">.</span><span class="na">createFactory</span><span class="o">();</span>
-</span><span class='line'>      <span class="c1">//配置是客户端连接Zookeeper服务器的端口，以及最大连接数</span>
-</span><span class='line'>      <span class="n">cnxnFactory</span><span class="o">.</span><span class="na">configure</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getClientPortAddress</span><span class="o">(),</span>
-</span><span class='line'>                            <span class="n">config</span><span class="o">.</span><span class="na">getMaxClientCnxns</span><span class="o">());</span>
-</span><span class='line'>      <span class="c1">//创建管理quorum协议的QuorumPeer类</span>
-</span><span class='line'>      <span class="n">quorumPeer</span> <span class="o">=</span> <span class="k">new</span> <span class="n">QuorumPeer</span><span class="o">();</span>
-</span><span class='line'>      <span class="c1">//设置客户端连接Zookeeper服务器的端口，Zookeeper会监听这个端口，接受客户端的访问请求</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setClientPortAddress</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getClientPortAddress</span><span class="o">());</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setTxnFactory</span><span class="o">(</span><span class="k">new</span> <span class="n">FileTxnSnapLog</span><span class="o">(</span>
-</span><span class='line'>                  <span class="k">new</span> <span class="nf">File</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getDataLogDir</span><span class="o">()),</span>
-</span><span class='line'>                  <span class="k">new</span> <span class="nf">File</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getDataDir</span><span class="o">())));</span>
-</span><span class='line'>      <span class="c1">//设置集群中的其它zookeeper</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setQuorumPeers</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getServers</span><span class="o">());</span>
-</span><span class='line'>      <span class="c1">//设置选举算法</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setElectionType</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getElectionAlg</span><span class="o">());</span>
-</span><span class='line'>      <span class="c1">//设置server ID</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setMyid</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getServerId</span><span class="o">());</span>
-</span><span class='line'>      <span class="c1">//这个时间是作为Zookeeper服务器之间或客户端与服务器之间维持心跳的时间间隔，也就是每个 tickTime 时间就会发送一个心跳。</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setTickTime</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getTickTime</span><span class="o">());</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setMinSessionTimeout</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getMinSessionTimeout</span><span class="o">());</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setMaxSessionTimeout</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getMaxSessionTimeout</span><span class="o">());</span>
-</span><span class='line'>      <span class="c1">//initLimit配置项是用来配置 Zookeeper 接受客户端（这里所说的客户端不是用户连接 Zookeeper 服务器的客户端，而是 Zookeeper 服务器集群中连接到 Leader 的 Follower 服务器）初始化连接时最长能忍受多少个心跳时间间隔数。当已经超过 10 个心跳的时间（也就是 tickTime）长度后 Zookeeper 服务器还没有收到客户端的返回信息，那么表明这个客户端连接失败。总的时间长度就是 5*2000=10 秒</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setInitLimit</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getInitLimit</span><span class="o">());</span>
-</span><span class='line'>      <span class="c1">//syncLimit配置项标识 Leader 与 Follower 之间发送消息，请求和应答时间长度，最长不能超过多少个 tickTime 的时间长度，总的时间长度就是 2*2000=4 秒</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setSyncLimit</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getSyncLimit</span><span class="o">());</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setQuorumVerifier</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getQuorumVerifier</span><span class="o">());</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setCnxnFactory</span><span class="o">(</span><span class="n">cnxnFactory</span><span class="o">);</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setZKDatabase</span><span class="o">(</span><span class="k">new</span> <span class="n">ZKDatabase</span><span class="o">(</span><span class="n">quorumPeer</span><span class="o">.</span><span class="na">getTxnFactory</span><span class="o">()));</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">setLearnerType</span><span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getPeerType</span><span class="o">());</span>
-</span><span class='line'>      <span class="c1">//实现了Runable接口的start方法，启动线程。</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">start</span><span class="o">();</span>
-</span><span class='line'>      <span class="n">quorumPeer</span><span class="o">.</span><span class="na">join</span><span class="o">();</span>
-</span><span class='line'>  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">InterruptedException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
-</span><span class='line'>      <span class="c1">// warn, but generally this is ok</span>
-</span><span class='line'>      <span class="n">LOG</span><span class="o">.</span><span class="na">warn</span><span class="o">(</span><span class="s">&quot;Quorum Peer interrupted&quot;</span><span class="o">,</span> <span class="n">e</span><span class="o">);</span>
-</span><span class='line'>  <span class="o">}</span>
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>runFromConfig的执行流程中，主要创建了QuorumPeer对象，该类定义了Server类型。首先根据配置对象中的配置信息设置相关的配置，然后调用start函数启动服务，QuorumPeer类将在后面的文章中进行详细地分析。</p>
 ]]></content>
   </entry>
   

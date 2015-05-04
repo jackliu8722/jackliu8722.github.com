@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>zookeeper源码分析(三)——类QuorumPeer的分析 - 精神兵的 Blog</title>
+  <title>Cassandra架构与源码分析(一) - 精神兵的 Blog</title>
   <meta name="author" content="jackliu">
 
   
-  <meta name="description" content="在Zookeeper中，类QuoromPeer处在非常重要的地位，它管理了quorum协议，并且包含以下三种状态： Leader选择：每个server都将选出一个leader（最初建议server自己为leader）。
-Follower：处于该状态的server将与leader进行同步， &hellip;">
+  <meta name="description" content="Cassandra是什么 随着互联网的蓬勃发展，NoSQL数据库风生水起，涌现出了非常多的非关系数据库，比较火的有MongoDB,HBase，Cassandra等，我们这里主要讲Cassandra，那它是怎么样的一个NoSQL数据库呢？ Cassandra是一套混合型的非关系KV数据库系统， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +18,7 @@ Follower：处于该状态的server将与leader进行同步， &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jackliu8722.github.com/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/">
+  <link rel="canonical" href="http://jackliu8722.github.com/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -109,7 +108,7 @@ Follower：处于该状态的server将与leader进行同步， &hellip;">
   
   <header>
     
-      <h1 class="entry-title">zookeeper源码分析(三)——类QuorumPeer的分析</h1>
+      <h1 class="entry-title">Cassandra架构与源码分析(一)</h1>
     
     
       <p class="meta">
@@ -125,21 +124,18 @@ Follower：处于该状态的server将与leader进行同步， &hellip;">
   
 
 
-<time datetime="2013-10-29T23:12:00+08:00" pubdate data-updated="true">2013年10月29日</time>
+<time datetime="2014-03-18T23:38:00+08:00" pubdate data-updated="true">2014年03月18日</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>在Zookeeper中，类QuoromPeer处在非常重要的地位，它管理了quorum协议，并且包含以下三种状态：</p>
+<div class="entry-content"><h3>Cassandra是什么</h3>
 
-<ol>
-<li>Leader选择：每个server都将选出一个leader（最初建议server自己为leader）。</li>
-<li>Follower：处于该状态的server将与leader进行同步，并且复制任务事务。</li>
-<li>Leader：处于leader状态的server处理请求，并转发给Follower。大部分Follower在接受请求之前必须将请求输出到日志中。</li>
-</ol>
+<p>随着互联网的蓬勃发展，NoSQL数据库风生水起，涌现出了非常多的非关系数据库，比较火的有MongoDB,HBase，Cassandra等，我们这里主要讲Cassandra，那它是怎么样的一个NoSQL数据库呢？</p>
 
+<p>Cassandra是一套混合型的非关系KV数据库系统，类似于Google的BigTable。大家应该知道Amazon的Dynamo分布式系统吧(不了解的可以google一下)，Cassandra的功能比Dynamo更丰富，但支持度却不如文档存储系统MongoDB。Cassandra最初由Facebook开发，后来转变成了一个开源项目。它是一个网络社交云计算方面理想的数据库。以Amazon专有的完全分布式的Dynamo为基础，并结合了Google的基于列族数据模型的Bigtable，是一个完全P2P去中心化的存储系统。</p>
 </div>
 
 
@@ -162,7 +158,7 @@ Follower：处于该状态的server将与leader进行同步， &hellip;">
   
 
 
-<time datetime="2013-10-29T23:12:00+08:00" pubdate data-updated="true">2013年10月29日</time>
+<time datetime="2014-03-18T23:38:00+08:00" pubdate data-updated="true">2014年03月18日</time>
       
 
 <span class="categories">
@@ -209,10 +205,8 @@ var jiathis_config = {data_track_clickback:'true'};
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2013/10/26/urllib2-with-python/" title="Previous Post: 如何使用urllib2获取网络资源">&laquo; 如何使用urllib2获取网络资源</a>
+        <a class="basic-alignment left" href="/blog/2014/03/18/merkle-tree/" title="Previous Post: Merkle Tree">&laquo; Merkle Tree</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2013/11/07/linux-kernel-001/" title="Next Post: linux源码分析之进程表示">linux源码分析之进程表示 &raquo;</a>
       
     </p>
   </footer>

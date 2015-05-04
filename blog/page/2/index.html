@@ -9,7 +9,7 @@
   <meta name="author" content="jackliu">
 
   
-  <meta name="description" content="说明 本文主要把工作中和学习中遇到的一些常用的linux命令进行了整理，方便今后查阅，以节省时间，时间就是Money啊，哈哈…… 1. tail 作用 该命令从指定的行开始将文件写到标准输出。使用tail命令的-f选项可以方便的查阅正在改变的日志文件，tail -f &hellip;">
+  <meta name="description" content="Zookeeper是什么 Zookeeper是Hadoop的一个子项目，它是一个针对大型分布式系统的可靠协调系统，提供的功能包括：维护配置信息(maintaining configuration information)、名字服务(naming service)、分布式同步(distributed &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -91,6 +91,7 @@
   <li><a href="/blog/archives">博客列表</a></li>
   <li><a href="/blog/categories/ml/">机器学习</a></li>
   <li><a href="/blog/categories/distributed/">分布式</a></li>
+  <li><a href="/blog/categories/arch/">架构</a></li>
   <li><a href="/blog/categories/java/">Java</a></li>
   <li><a href="/blog/categories/python/">Python</a></li>
   <li><a href="/blog/categories/linux/">Linux</a></li>
@@ -104,6 +105,162 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/">Zookeeper-源码分析(一)——简介</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-09T23:10:00+08:00" pubdate data-updated="true">2013年10月09日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Zookeeper是什么</h2>
+
+<p>Zookeeper是Hadoop的一个子项目，它是一个针对大型分布式系统的可靠协调系统，提供的功能包括：维护配置信息(maintaining configuration information)、名字服务(naming service)、分布式同步(distributed synchronization)、组服务(group services)等等，以上的服务经常应用在分布式系统当中。</p>
+
+<p>Zookeeper的目标是封装好复杂并易出错的关键服务，将简单易用的接口和性能高效、功能稳定的系统提供给用户，从而降低用户实现分布式系统的难度。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/">在Octopress中显示数学公式</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-18T23:17:00+08:00" pubdate data-updated="true">2013年09月18日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>由于个人对机器学习比较感兴趣，而机器学习的学习过程中会遇到非常多的数学公式，因此，写博客的过程中离不开公式的撰写。</p>
+
+<p>平时写博客是在Mou下进行的，而Mou是支持<a href="http://www.latex-project.org/"><strong>LaTeX</strong></a>的，因此，通过Mou写的公式在博客未发布前是可能预览的。但是博客发布，显示的却不是公式，而是一串字符串，在网上找了下，原来Octopress要支持数学公式是需要安装插件的，在网上找了找记下配置过程和大家分享。</p>
+
+<h3>安装kramdown</h3>
+
+<p>kramdown是什么，我这里就不多介绍了，有兴趣大家可以点击<a href="http://kramdown.rubyforge.org/"><strong>这里</strong></a>。
+通过以下命令安装kramdown包</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>gem install kramdown</span></code></pre></td></tr></table></div></figure>
+
+
+<p>待安装完成之后进入 <em>OCTOPRESS_PATH/source/_includes/custom/</em> 目录，<em>OCTOPRESS_PATH</em>是Octopress的根目录。在该目录下找到head.html文件，在该文件中添加以下内容：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="c">&lt;!--</span> <span class="nx">mathjax</span> <span class="nx">config</span> <span class="nx">similar</span> <span class="nx">to</span> <span class="nx">math</span><span class="p">.</span><span class="nx">stackexchange</span> <span class="o">--&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>  <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class='line'>    <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$$$&#39;</span><span class="p">,</span><span class="s1">&#39;$$$&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;\\(&quot;</span><span class="p">,</span><span class="s2">&quot;\\)&quot;</span><span class="p">]</span> <span class="p">],</span>
+</span><span class='line'>      <span class="nx">processEscapes</span><span class="o">:</span> <span class="kc">true</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class='line'>      <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">skipTags</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;script&#39;</span><span class="p">,</span> <span class="s1">&#39;noscript&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">,</span> <span class="s1">&#39;textarea&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span><span class="p">]</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Queue</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">all</span> <span class="o">=</span> <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">getAllJax</span><span class="p">(),</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">for</span><span class="p">(</span><span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">all</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">all</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">SourceElement</span><span class="p">().</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">className</span> <span class="o">+=</span> <span class="s1">&#39; has-jax&#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span>
+</span><span class='line'>   <span class="nx">src</span><span class="o">=</span><span class="s2">&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot;</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>配置完成之后，就可以在Mou中使用LaTeX来撰写数学公式，并且发布后能够正常显示。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -422,7 +579,7 @@ Good luck!</p>
   <li><a href='/blog/categories/linux/'>Linux (2)</a></li>
   <li><a href='/blog/categories/Python/'>Python (1)</a></li>
   <li><a href='/blog/categories/others/'>其它 (3)</a></li>
-  <li><a href='/blog/categories/distributed/'>分布式 (6)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (8)</a></li>
   <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
 </ul>
 </section>
@@ -430,6 +587,14 @@ Good luck!</p>
 <section>
   <h1>最近博文</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/">Cassandra架构与源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/18/merkle-tree/">Merkle Tree</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/11/08/zookeeper-java-example/">Zookeeper之java实例</a>
@@ -441,14 +606,6 @@ Good luck!</p>
     
       <li class="post">
         <a href="/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/">zookeeper源码分析(三)——类QuorumPeer的分析</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/26/urllib2-with-python/">如何使用urllib2获取网络资源</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/21/writing-an-ice-application-with-java/">用Java实现一个ICE应用</a>
       </li>
     
   </ul>
@@ -482,7 +639,7 @@ Good luck!</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2014 - jackliu -
+  Copyright &copy; 2015 - jackliu -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
