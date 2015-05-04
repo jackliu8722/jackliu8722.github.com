@@ -9,7 +9,7 @@
   <meta name="author" content="jackliu">
 
   
-  <meta name="description" content="Cassandra是什么 随着互联网的蓬勃发展，NoSQL数据库风生水起，涌现出了非常多的非关系数据库，比较火的有MongoDB,HBase，Cassandra等，我们这里主要讲Cassandra，那它是怎么样的一个NoSQL数据库呢？ Cassandra是一套混合型的非关系KV数据库系统， &hellip;">
+  <meta name="description" content="注：本文是对微信群@QCon高可用架构群中的热火讨论，再加上微信同学的一些介绍所总结而出的一篇红包原理的文章 相信大家都玩过微信红包，今天就跟大家分享一下微信红包的原理，仅供参考。 发红包过程 微信发红包的过程如上图所示，详细过程如下： 步骤1： 请求通过前端负载均衡到达业务层； 步骤2： &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -106,6 +106,125 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/05/04/wei-xin-hong-bao-yuan-li/">微信红包原理</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2015-05-04T22:32:00+08:00" pubdate data-updated="true">2015年05月04日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h5>注：本文是对微信群@QCon高可用架构群中的热火讨论，再加上微信同学的一些介绍所总结而出的一篇红包原理的文章</h5>
+
+<p>相信大家都玩过微信红包，今天就跟大家分享一下微信红包的原理，仅供参考。</p>
+
+<h3>发红包过程</h3>
+
+<p><img class="center" src="/images/wei-xin-hong-bao-yuan-li/fa-hong-bao.png"></p>
+
+<p>微信发红包的过程如上图所示，详细过程如下：</p>
+
+<h4>步骤1：</h4>
+
+<p>请求通过前端负载均衡到达业务层；</p>
+
+<h4>步骤2：</h4>
+
+<p>业务层将红包信息以红包ID(sendId)为key写入到Cache层，红包记录包括红包个数Count、红包额度Money;</p>
+
+<h4>步骤3：</h4>
+
+<p>业务层将红步骤2中的红包信息同时也写入到db;</p>
+
+<h5>注：步骤2和步骤3可以同时进行，执行完成之后业务层就可以将红包推送给群里用户了</h5>
+
+<h3>点击进入红包过程</h3>
+
+<p><img class="center" src="/images/wei-xin-hong-bao-yuan-li/dian-ji-jin-ru-hong-bao.png"></p>
+
+<p>用户点击进入红包的处理过程如上图所示，详细过程如下：</p>
+
+<h4>步骤1：</h4>
+
+<p>请求通过前端负载均衡到达业务层；</p>
+
+<h4>步骤2：</h4>
+
+<p>业务层根据红包id访问cache；</p>
+
+<h4>步骤3：</h4>
+
+<p>cache层将红包信息返回给业务层；</p>
+
+<h4>步骤4：</h4>
+
+<p>业务层根据红包的剩余个数(Count)决定客户端的最终结果，如果Count>0，表示红包可折，提示用户可以进行折红包，否则提示用户红包已被抢完；</p>
+
+<h3>拆红包过程</h3>
+
+<p><img class="center" src="/images/wei-xin-hong-bao-yuan-li/cai-hong-bao.png"></p>
+
+<p>用户拆红包的过程图如上图所示，详细过程如下：</p>
+
+<h4>步骤1：</h4>
+
+<p>请求通过前端负载均衡到达业务层；</p>
+
+<h4>步骤2：</h4>
+
+<p>业务层根据红包id访问cache；</p>
+
+<h4>步骤3：</h4>
+
+<p>cache层将红包信息返回给业务层，如果红包剩余个数（Count）等于0，说明红包已经被抢完，执行步骤7，直接返回提示用户红包已经被抢完，否则计算红包金额，计算的方式如下：生成从0.01元到剩余平均值2倍之间的一个随机数作为金额（当红包剩余个数为2时，有可能存在超过剩余金额的情况，但只要保证给最后一个红包剩余不少于0.01元的额度即可），最后一个红包直接取剩余额度即可。
+步骤4：生成红包额度之后，通过Cache提供的 CAS操作更新红包信息(红包个数减1，剩余总额减去当成红包的额度)。</p>
+
+<h4>步骤5：</h4>
+
+<p>更新Cache之后，更新DB，记录当前被抢了的红包数和金额；</p>
+
+<h4>步骤6：</h4>
+
+<p>如果更新成功返回给业务层，更新失败，业务层可重试；</p>
+
+<h4>步骤7：</h4>
+
+<p>红包剩余个数为0，则返回，提示用户红包已经被抢完，或者更新DB之后，返回用户抢到红包的额度；</p>
+
+<h5>注：有些同学讨论之后总结CAS操作在数据库层去执行，我觉得应该在Cache层更合适，因为Cache容易实现，而且Cache可以专门去做CAS操作，因此个人觉得Cache比较合适。</h5>
+
+<h3>查询红包过程</h3>
+
+<p>查询红包直接读Cache即可，如果红包未抢完，则返回已抢到红包的用户列表，否则返回用户列表的同时，还计算是最佳手气用户，最佳手气的影响因素有两个，一个是红包大小，一个是时间，红包最大者手气最佳，如果存在多个最大者，那就拼时间，最先抢到最大红包的用户手气最佳。</p>
+
+<h5>注：与红包相关的数据量不少，DB存储和Cache都做了Sharding，同时，红包是跟钱相关的，那么存储层的高可靠和高可用性是必须要考虑的一个问题，而且是一个比较大的话题，这里就不做介绍了，有兴趣的同学可以自己思考一下。</h5>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -2774,103 +2893,6 @@ $
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/10/16/pca/">主成份分析(PCA)</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-16T08:19:00+08:00" pubdate data-updated="true">2013年10月16日</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>主成份分析（Principal components analysis，PCA）是一种分析、简化数据集的技术。PCA在应用中使用得非常广泛，比如：降维、有损数据压缩、特征提取以及数据可视化。</p>
-
-<p>对PCA的定义有两种常用的方法，但是最终都产生了相同的算法。第一种定义为将一个高维的数据投影到低维的线性空间上，这样的低维空间被称为主体子空间，投影后，使数据的方差最大化，该定义可称为最大方差理论。等价地，</p>
-
-<h3>最大方差理论</h3>
-
-<p>假设有一个样本数据集{$$$x_{n}$$$}，其中n=1,……,N，$$$x_{n}$$$为欧几时德空间中维度为D的变量。我们的目的是将数据投影到维数为M的空间上，并且使投影后数据的方差最大，其中$$$D&lt;M$$$。就目前而言，假设M的值是已知的，在后面，我们将通过数据集以确定一个合适的M值。</p>
-
-<p>首先，我们考虑将数据投影到一个一维空间上，即M=1。定义该空间的方向向量用D维向量$$$u_1$$$表示，为了方便起见，我们应该选择一个单位向量以定义空间的方法，因此$$$u_1$$$应该满足 $$$ u_1 ^{T}u_1=1 $$$。我们只关心$$$u_1$$$所决定的方向，而不关心$$$u_1$$$本身。数据集中的每个数据$$$x_n$$$投影后得到一个标量$$$x_1 ^Tx_n$$$，投影后数据的均值为$$$u_1 ^T\bar{x}$$$，其中$$$\bar{x}$$$为样本数据的均值，由以下式子得到。\[\bar{x}={1 \over N}\sum_{n=1} ^Nx_n\]
-投影后数据的均方差为\[ \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) ^2\]</p>
-
-<p>\[\Rightarrow \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) (u_1 ^T x_n - u_1 ^T \bar{x}) ^T\]</p>
-
-<p>\[\Rightarrow \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) (x_n ^T u_1 - \bar{x} ^T u_1)\]</p>
-
-<p>\[\Rightarrow \quad  \bar{V} = {1 \over N} \sum_{n=1} ^N u_1 ^T(x_n - \bar{x}) (x_n  - \bar{x}) ^Tu_1  \]</p>
-
-<p>\[\Rightarrow \quad \bar{V} = u_1 ^T{1 \over N} \sum_{n=1} ^N (x_n - \bar{x}) (x_n - \bar{x}) ^Tu_1  \]</p>
-
-<p>令</p>
-
-<p>\[ S = {1 \over N} \sum_{n=1} ^N (x_n - \bar{x}) (x_n - \bar{x}) ^T  \]</p>
-
-<p>因此，投影后数据的方差可以写成如下形式
-\[ \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) ^2 = u_1 ^T S u_1\]</p>
-
-<p>现在我们寻找一个合适的向量$$$u_1$$$使用方差$$$u_1 ^T $u_1$$$最大。显示，这是一个带约束的最大化问题，我们可以选择$$$u_1 ^T u_1 = 1$$$作为约束条件，然后我们增加一个拉格朗日因子，得到一个不带约束条件的最大化问题
-\[ L(u_1) = u_1 ^TSu_1 +\lambda_1(1-u_1 ^T u_1)\]
-对$$$L(u_1)$$$求关于$$$u_1$$$的导数，有</p>
-
-<p>\[\frac{\partial L(u_1)}{\partial u_1} = 2Su_1 - 2\lambda_1u_1\]
-以上的求导过程会用到以下结论:
-\[(1) \qquad \quad trABC=trCAB=trBCA\]
-\[(2) \qquad \qquad \qquad trA=trA ^T \qquad \]
-\[(3) \qquad tr(A+B)=trA +trB \qquad \]
-\[(4) \qquad \qquad \nabla _AtrAB=B ^T \qquad \quad \]
-\[(5) \qquad \nabla _{A ^T} f(A)=(\nabla _Af(A)) ^T \qquad \]
-\[(6) \quad \nabla_AtrABA ^TC= CAB+C ^TAB ^T\]
-其中，A, B, C为矩阵。</p>
-
-<p>由$$$L(u_1)$$$的表达式有
-\[\frac{\partial L(u_1)}{\partial u_1} = \nabla_{u_1}u_1 ^TSu_1 - \lambda _1\nabla _{u_1}u_1 ^T u_1\]
-而</p>
-
-<p>\[\nabla_{u_1}u_1 ^TSu_1=\nabla_{u_1}tru_1 ^TSu_1\]
-\[ \qquad \qquad =\nabla_{u_1}tru_1u_1 ^TS\]
-\[ \qquad \quad \qquad =\nabla_{u_1}tru_1Eu_1 ^TS \]
-\[ \qquad \qquad \qquad =Su_1E+S ^Tu_1E ^T\]
-\[ \qquad \qquad =2Su_1 \qquad  \]
-因此$$$\nabla_{u_1}u_1 ^TSu_1 = 2Su_1$$$,其中，使用了条件$$$S=S ^T$$$,$$$E=E ^T$$$。</p>
-
-<p>同样地，可以求得$$$\nabla_{u_1}u_1 ^T u_1=2u_1$$$，因此，有$$$\frac{\partial L(u_1)}{\partial u_1} = 2Su_1 - 2\lambda_1u_1$$$，令$$$\frac{\partial L(u_1)}{\partial u_1} = 0$$$,有\[ 2Su_1 - 2\lambda_1u_1 = 0\]
-推导得到式子
-\[Su_1 =\lambda_1u_1\]
-也就是说，$$$u_1$$$必须是矩阵的一个特征向量，我们再左乘一个$$$u_1 ^T$$$得到
-\[u_1 ^TSu_1 = u_1 ^T\lambda_1u_1 = \lambda_1 u_1 ^Tu_1\]
-由$$$u_1 ^T u_1 = 1$$$可得\[u_1 ^TSu_1 = \lambda_1\]
-因此，当我们设置$$$u_1$$$等于矩阵$$$S$$$的最大特征值的特征向量时，方差可取得最大值。此时，$$$u_1$$$称为第一主成分特征向量。</p>
-
-<p>我们可以通过以增量的方式选择一个新的方向定义额外的主成分以使方差最大化，这些新选择的方向必须与已经选择的方向向量正交。假设我们考虑一个M维的投影空间，使方差最大化的最优线性投影为方差矩阵$$$S$$$的前M特征值对应的特征向量$$$u_1,&#8230;,u_M$$$，这个结论很容易使用前面的推导进行证明。</p>
-
-<p>总结一下，主成分分析涉及到计算数据的均值$$$\bar {x}$$$和方差矩阵$$$S$$$，然后计算方差矩阵$$$S$$$前M大特征值对应的特征向量。寻找特征向量和特征值，以及其它与特征向量有关的分解定理的算法，可以在Golub and Van Loan (1996)的文章中找到。</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -2892,12 +2914,17 @@ $
   <li><a href='/blog/categories/others/'>其它 (3)</a></li>
   <li><a href='/blog/categories/distributed/'>分布式 (8)</a></li>
   <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
+  <li><a href='/blog/categories/arch/'>架构 (1)</a></li>
 </ul>
 </section>
 
 <section>
   <h1>最近博文</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/05/04/wei-xin-hong-bao-yuan-li/">微信红包原理</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/">Cassandra架构与源码分析(一)</a>
@@ -2913,10 +2940,6 @@ $
     
       <li class="post">
         <a href="/blog/2013/11/07/linux-kernel-001/">linux源码分析之进程表示</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/">zookeeper源码分析(三)——类QuorumPeer的分析</a>
       </li>
     
   </ul>
