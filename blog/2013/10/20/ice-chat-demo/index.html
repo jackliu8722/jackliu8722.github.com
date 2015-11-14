@@ -1,0 +1,390 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ICE Chat Demo(中文翻译) - 精神兵的 Blog</title>
+  <meta name="author" content="jackliu">
+
+  
+  <meta name="description" content="简介 ZeroC提供了一个简单的应用，该应用允许用户接入一个聊天室，并且与其它用户进行聊天。此聊天应用提出了一些有趣的设计，这些设计在开发一个分布式应用时，可能会成为我们面临的挑战，因此它是一个极好的案例研究。 聊天应用使用C++实现了服务端，客户端可以使用不同的语言，图形化程序使用C#, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jackliu8722.github.com/blog/2013/10/20/ice-chat-demo/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="精神兵的 Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$$$','$$$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">精神兵的 Blog</a></h1>
+  
+    <h2>领袖与跟风者的区别就在于创新——乔布斯</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jackliu8722.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">博客首页</a></li>
+  <li><a href="/blog/archives">博客列表</a></li>
+  <li><a href="/blog/categories/ml/">机器学习</a></li>
+  <li><a href="/blog/categories/distributed/">分布式</a></li>
+  <li><a href="/blog/categories/arch/">架构</a></li>
+  <li><a href="/blog/categories/db/">存储</a></li>
+  <li><a href="/blog/categories/java/">Java</a></li>
+  <li><a href="/blog/categories/python/">Python</a></li>
+  <li><a href="/blog/categories/linux/">Linux</a></li>
+  <li><a href="/blog/categories/math/">数学</a></li>
+  <li><a href="/blog/categories/others/">其它</a></li>
+  <li><a href="/about/">关于</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">ICE Chat Demo(中文翻译)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-20T10:36:00+08:00" pubdate data-updated="true">2013年10月20日</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h3>简介</h3>
+
+<p>ZeroC提供了一个简单的应用，该应用允许用户接入一个聊天室，并且与其它用户进行聊天。此聊天应用提出了一些有趣的设计，这些设计在开发一个分布式应用时，可能会成为我们面临的挑战，因此它是一个极好的案例研究。</p>
+
+<p>聊天应用使用C++实现了服务端，客户端可以使用不同的语言，图形化程序使用C#, Java和C++，控制台程序使用C++实现，而基于web的客户端程序使用Java(applet), PHP和ActionScript.应用程序的各个组成部分由下图所示，我们将在后面的章节中对这些组件进行详细地探讨。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-01.png"></p>
+
+<p>ZeroC提供了一个公共的聊天服务器，你可以通过以下几种方式使用它：</p>
+
+<ul>
+<li>通过浏览器使用PHP, Silverlight, Applet或者Flash客户端进行聊天。</li>
+<li>下载编译好的Java或者.Net图形客户端。</li>
+<li>使用ICE支持的语言自己实现一个客户端。</li>
+</ul>
+
+
+<p>如果你愿意，也可以下载完整的应用程序源代码，并在自己的系统上运行。</p>
+
+<p>点击下面的链接继续阅读我们的聊天应用程序的介绍。如果对更详细的讨论感兴趣，请参阅更详细的<a href="http://www.zeroc.com/chat/articles.html">技术文章</a>。</p>
+
+<h3>内容</h3>
+
+<h5>ICE是什么</h5>
+
+<p>ICE（Internet Communications Engine）是一个分布式计算平台。它支持多种操作系统，编译器和编程语言，并允许你创建异构的分布式应用程序。换句话说，ICE让您轻松地创建分布式应用程序，并且可以运行在不同的操作系统上，同时可以用不同的语言编写，ICE允许这些应用程序无缝地进行交互，如下图所示。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-02.png"></p>
+
+<h5>Slice</h5>
+
+<p>无论开发者使用什么语言来实现应用程序，一种称为Slice的规范语言可以为应用程序定义类和接口。然后，编译器将这种独立于语言的规范转换成特定语言的API。生成的API考虑到了许多通信细节，而这些通信细节实现起来往往是比较困难的，否则需要开发者自己去实现。下图显示了一个典型的ICE应用的C++工具链。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-03.png"></p>
+
+<h5>客户端和服务端</h5>
+
+<p>在其它的分布式系统中，ICE应用由客户端和服务端组成，并共同完成任务。术语客户端和服务端不是应用程序特定部分的固定设计模式，相反，它们表示应用程序请求的角色。</p>
+
+<ul>
+<li>客户端是主动的实体，发送服务请求到服务器。</li>
+<li>服务是被动的实体，响应客户端的请求并提供服务。</li>
+</ul>
+
+
+<p>从理论上来讲，一个服务器只响应请求，但不发送请求。同样地，一个客户端只发送请求但不提供服务，如下图所示。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-04.png"></p>
+
+<p>作为一个客户端和服务器程序，这是很常见的。例如，客户端可能在服务器上启动一个长时间运行的操作，作为启动操作的一部分，客户端可以向服务器提供一个回调操作，当启动操作完成后，服务器可以通过回调通知客户端，在此情况下，当客户端执行启动操作时，客户端充当客户端的角色，而当服务器通知操作完成时，客户端又充当服务器的角色，如下图所示。因此，通常将客户端-服务器系统描述为对等系统更为准确。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-05.png"></p>
+
+<h5>对象和代理</h5>
+
+<p>一个ICE对象是对一个本地或者远程实体的抽象，并且可以响应客户端请求。它有一个唯一的标识和表示对象支持的一些已命名的操作的接口，这些对象可以支持更多的接口。客户端通过调用对象的方法向服务器发送请求。</p>
+
+<p>一个代理是客户端用来访问ICE对象的句柄。除了代理代表远程地址空间的一个对象以外，你可以认为代理类似于C++中的指针或者Java中的引用。当客户端调用代理的一个方法时，ICE运行环境需要小心地定位对象，如果有必要，启动服务器实例化对象，并且在客户端和服务器之间传递参数。</p>
+
+<p><img class="center" src="/images/ice-chat-demo/ice-chat-demo-06.png"></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jackliu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-20T10:36:00+08:00" pubdate data-updated="true">2013年10月20日</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/distributed/'>分布式</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+</div>
+<hr style="border-bottom:1px dotted #bdbabd;height:1px;border-top:0px;border-left:0px;border-right:0px;" />
+
+
+ 
+      <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+	<span class="jiathis_txt">分享到：</span>
+	<a class="jiathis_button_tools_1"></a>
+	<a class="jiathis_button_tools_2"></a>
+	<a class="jiathis_button_tools_3"></a>
+	<a class="jiathis_button_tools_4"></a>
+	<a href="http://www.jiathis.com/share?uid=1836686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=1355984157367920" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+<!-- UJian Button BEGIN -->
+	<div class="ujian-hook"></div>
+	<script type="text/javascript" src="http://v1.ujian.cc/code/ujian.js"></script>
+<!-- UJian Button END -->
+
+  
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/" title="Previous Post: Zookeeper-源码分析(二)——Server启动流程">&laquo; Zookeeper-源码分析(二)——Server启动流程</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/10/21/writing-an-ice-application-with-java/" title="Next Post: 用Java实现一个ICE应用">用Java实现一个ICE应用 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+<section>
+<h1>博客分类</h1>
+<ul>
+  <li><a href='/blog/categories/java/'>Java (1)</a></li>
+  <li><a href='/blog/categories/linux/'>Linux (2)</a></li>
+  <li><a href='/blog/categories/Python/'>Python (1)</a></li>
+  <li><a href='/blog/categories/others/'>其它 (3)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (8)</a></li>
+  <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
+  <li><a href='/blog/categories/arch/'>架构 (1)</a></li>
+</ul>
+</section>
+
+<section>
+  <h1>最近博文</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/05/04/wei-xin-hong-bao-yuan-li/">微信红包原理</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/">Cassandra架构与源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/18/merkle-tree/">Merkle Tree</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/11/08/zookeeper-java-example/">Zookeeper之java实例</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/11/07/linux-kernel-001/">linux源码分析之进程表示</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>新浪微博</h1>
+  <ul id="weibo">
+    <li>
+      <iframe 
+        width="100%" 
+        height="550" 
+        class="share_self" 
+        frameborder="0" 
+        scrolling="no" 
+        src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=1&speed=0&skin=1&isTitle=1&noborder=1&isWeibo=1&isFans=1&uid=1835292725&verifier=d90a04d3&dpc=1">
+      </iframe>
+    </li>
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+<section>
+<h1>发表评论</h1>
+ <div class="ds-thread"></div>
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"yangdd"};
+  (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+  </script>
+
+</section>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - jackliu -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

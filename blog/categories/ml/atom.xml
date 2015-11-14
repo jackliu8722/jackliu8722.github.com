@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[博客分类: 机器学习 | 精神兵的 Blog]]></title>
+  <link href="http://jackliu8722.github.com/blog/categories/ml/atom.xml" rel="self"/>
+  <link href="http://jackliu8722.github.com/"/>
+  <updated>2015-05-04T23:47:19+08:00</updated>
+  <id>http://jackliu8722.github.com/</id>
+  <author>
+    <name><![CDATA[jackliu]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[主成份分析(PCA)]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/10/16/pca/"/>
+    <updated>2013-10-16T08:19:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/10/16/pca</id>
+    <content type="html"><![CDATA[<p>主成份分析（Principal components analysis，PCA）是一种分析、简化数据集的技术。PCA在应用中使用得非常广泛，比如：降维、有损数据压缩、特征提取以及数据可视化。</p>
+
+<p>对PCA的定义有两种常用的方法，但是最终都产生了相同的算法。第一种定义为将一个高维的数据投影到低维的线性空间上，这样的低维空间被称为主体子空间，投影后，使数据的方差最大化，该定义可称为最大方差理论。等价地，</p>
+
+<h3>最大方差理论</h3>
+
+<p>假设有一个样本数据集{$$$x_{n}$$$}，其中n=1,……,N，$$$x_{n}$$$为欧几时德空间中维度为D的变量。我们的目的是将数据投影到维数为M的空间上，并且使投影后数据的方差最大，其中$$$D&lt;M$$$。就目前而言，假设M的值是已知的，在后面，我们将通过数据集以确定一个合适的M值。</p>
+
+<p>首先，我们考虑将数据投影到一个一维空间上，即M=1。定义该空间的方向向量用D维向量$$$u_1$$$表示，为了方便起见，我们应该选择一个单位向量以定义空间的方法，因此$$$u_1$$$应该满足 $$$ u_1 ^{T}u_1=1 $$$。我们只关心$$$u_1$$$所决定的方向，而不关心$$$u_1$$$本身。数据集中的每个数据$$$x_n$$$投影后得到一个标量$$$x_1 ^Tx_n$$$，投影后数据的均值为$$$u_1 ^T\bar{x}$$$，其中$$$\bar{x}$$$为样本数据的均值，由以下式子得到。\[\bar{x}={1 \over N}\sum_{n=1} ^Nx_n\]
+投影后数据的均方差为\[ \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) ^2\]</p>
+
+<p>\[\Rightarrow \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) (u_1 ^T x_n - u_1 ^T \bar{x}) ^T\]</p>
+
+<p>\[\Rightarrow \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) (x_n ^T u_1 - \bar{x} ^T u_1)\]</p>
+
+<p>\[\Rightarrow \quad  \bar{V} = {1 \over N} \sum_{n=1} ^N u_1 ^T(x_n - \bar{x}) (x_n  - \bar{x}) ^Tu_1  \]</p>
+
+<p>\[\Rightarrow \quad \bar{V} = u_1 ^T{1 \over N} \sum_{n=1} ^N (x_n - \bar{x}) (x_n - \bar{x}) ^Tu_1  \]</p>
+
+<p>令</p>
+
+<p>\[ S = {1 \over N} \sum_{n=1} ^N (x_n - \bar{x}) (x_n - \bar{x}) ^T  \]</p>
+
+<p>因此，投影后数据的方差可以写成如下形式
+\[ \bar{V} = {1 \over N} \sum_{n=1} ^N (u_1 ^T x_n - u_1 ^T \bar{x}) ^2 = u_1 ^T S u_1\]</p>
+
+<p>现在我们寻找一个合适的向量$$$u_1$$$使用方差$$$u_1 ^T $u_1$$$最大。显示，这是一个带约束的最大化问题，我们可以选择$$$u_1 ^T u_1 = 1$$$作为约束条件，然后我们增加一个拉格朗日因子，得到一个不带约束条件的最大化问题
+\[ L(u_1) = u_1 ^TSu_1 +\lambda_1(1-u_1 ^T u_1)\]
+对$$$L(u_1)$$$求关于$$$u_1$$$的导数，有</p>
+
+<p>\[\frac{\partial L(u_1)}{\partial u_1} = 2Su_1 - 2\lambda_1u_1\]
+以上的求导过程会用到以下结论:
+\[(1) \qquad \quad trABC=trCAB=trBCA\]
+\[(2) \qquad \qquad \qquad trA=trA ^T \qquad \]
+\[(3) \qquad tr(A+B)=trA +trB \qquad \]
+\[(4) \qquad \qquad \nabla _AtrAB=B ^T \qquad \quad \]
+\[(5) \qquad \nabla _{A ^T} f(A)=(\nabla _Af(A)) ^T \qquad \]
+\[(6) \quad \nabla_AtrABA ^TC= CAB+C ^TAB ^T\]
+其中，A, B, C为矩阵。</p>
+
+<p>由$$$L(u_1)$$$的表达式有
+\[\frac{\partial L(u_1)}{\partial u_1} = \nabla_{u_1}u_1 ^TSu_1 - \lambda _1\nabla _{u_1}u_1 ^T u_1\]
+而</p>
+
+<p>\[\nabla_{u_1}u_1 ^TSu_1=\nabla_{u_1}tru_1 ^TSu_1\]
+\[ \qquad \qquad =\nabla_{u_1}tru_1u_1 ^TS\]
+\[ \qquad \quad \qquad =\nabla_{u_1}tru_1Eu_1 ^TS \]
+\[ \qquad \qquad \qquad =Su_1E+S ^Tu_1E ^T\]
+\[ \qquad \qquad =2Su_1 \qquad  \]
+因此$$$\nabla_{u_1}u_1 ^TSu_1 = 2Su_1$$$,其中，使用了条件$$$S=S ^T$$$,$$$E=E ^T$$$。</p>
+
+<p>同样地，可以求得$$$\nabla_{u_1}u_1 ^T u_1=2u_1$$$，因此，有$$$\frac{\partial L(u_1)}{\partial u_1} = 2Su_1 - 2\lambda_1u_1$$$，令$$$\frac{\partial L(u_1)}{\partial u_1} = 0$$$,有\[ 2Su_1 - 2\lambda_1u_1 = 0\]
+推导得到式子
+\[Su_1 =\lambda_1u_1\]
+也就是说，$$$u_1$$$必须是矩阵的一个特征向量，我们再左乘一个$$$u_1 ^T$$$得到
+\[u_1 ^TSu_1 = u_1 ^T\lambda_1u_1 = \lambda_1 u_1 ^Tu_1\]
+由$$$u_1 ^T u_1 = 1$$$可得\[u_1 ^TSu_1 = \lambda_1\]
+因此，当我们设置$$$u_1$$$等于矩阵$$$S$$$的最大特征值的特征向量时，方差可取得最大值。此时，$$$u_1$$$称为第一主成分特征向量。</p>
+
+<p>我们可以通过以增量的方式选择一个新的方向定义额外的主成分以使方差最大化，这些新选择的方向必须与已经选择的方向向量正交。假设我们考虑一个M维的投影空间，使方差最大化的最优线性投影为方差矩阵$$$S$$$的前M特征值对应的特征向量$$$u_1,...,u_M$$$，这个结论很容易使用前面的推导进行证明。</p>
+
+<p>总结一下，主成分分析涉及到计算数据的均值$$$\bar {x}$$$和方差矩阵$$$S$$$，然后计算方差矩阵$$$S$$$前M大特征值对应的特征向量。寻找特征向量和特征值，以及其它与特征向量有关的分解定理的算法，可以在Golub and Van Loan (1996)的文章中找到。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[EM算法]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/09/08/emsuan-fa/"/>
+    <updated>2013-09-08T20:30:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/09/08/emsuan-fa</id>
+    <content type="html"><![CDATA[<h2>1 简介</h2>
+
+<p>一直对EM算法有一种莫明的喜欢感，觉得它非常的神奇，其思想也非常的让人深思，给我的感觉就是一种美。</p>
+
+<p>EM算法是最大期望算法(Exception-maximization algorithm)的简称。它是一种迭代算法，用于求含有隐变量的概率模型参数的极大似然估计。</p>
+
+<p>EM算法经过两个步骤交替进行计算，从而求得概率模型的极大似然估计：</p>
+
+<ol>
+<li><p>第一步计算期望，也就是E，利用对隐变量的现在估计值，计算模型的极大似然估计值。</p></li>
+<li><p>第二步是最大化过程，也就是M。该过程在第一步基础上计算模型到达极大值时参数的值。</p></li>
+</ol>
+
+
+<h2>2 EM算法的推导</h2>
+
+<h4>2.1 算法的引入</h4>
+
+<p>假设我们记n个观测样本为
+\[x_1,x_2,x_3,…,x_k,…,x_n\]
+<strong>注意:</strong>一般我们假设各样本之间满足独立同分布(independent and identically distributed, i.i.d)。</p>
+
+<p>观测样本即为观测变量，可将所有的观测变量记为<strong>X</strong>。相应的，观测变量对应的隐变量为
+\[z_1,z_2,z_3,…,z_k,…z_n\]
+同样的，假设隐变量之间满足独立同分布，记所有的隐变量为<strong>Z</strong>。观测变量与隐变量的联合分布为 <strong>$$ P(X,Z |\theta )$$</strong></p>
+
+<p>其中， $$$\theta$$$是模型的参数。</p>
+
+<p>一般地，我们可以将观测变量X称为不完全数据，将(X,Z)称为完全数据(complete-data)。我们的目标是最大化$$$P(X|\theta)$$$，而
+\[P(X|\theta)= \sum_{Z}P(X,Z|\theta) \]</p>
+
+<p>假设Z是离散的（如果Z是连续的，可以用积分代替求和）。</p>
+
+<p>在最大化$$$P(X|\theta)$$$的时候，如果不存在隐变量，我们可以直接通过最大似然估计求解模型的参数$$$\theta$$$，由于隐变量Z的存在，求解模型参数的最优值就变得比较困难了。但是求解完全数据的最大似然函数$$$P(X,Z|\theta)$$$的最优解是比较容易的。</p>
+
+<h4>2.2 算法的推导</h4>
+
+<p>从2.1节我们已经知道，我们的目标是最大化$$$P(X|\theta)$$$，而我们可以做如下的一些推导。
+\[ P(X|\theta)={P(X,Z|\theta) \over P(Z|X,\theta) }\]
+两边取对数
+\[ \ln P(X|\theta)=\ln {P(X,Z|\theta) \over P(Z|X,\theta)}\]
+即可得到
+\[ \ln P(X|\theta)=\ln P(X,Z|\theta)  - \ln P(Z|X,\theta)\]
+假设有分布$$$\ln q(Z)$$$，则有
+\[ \ln P(X|\theta)=\ln P(X,Z|\theta)  - \ln q(Z) + \ln q(Z) - \ln P(Z|X,\theta)\]</p>
+
+<p>\[ \ln P(X|\theta)=(\ln P(X,Z|\theta) - \ln q(Z)) - (\ln P(Z|X,\theta)-\ln q(Z))\]</p>
+
+<p>\[ \ln P(X|\theta)={\ln {P(X,Z|\theta) \over q(Z)}} - {\ln {P(Z|X,\theta) \over q(Z)}}\]
+等式两边同乘以$$$q(Z)$$$，并对Z求积分(Z是连续随机变量)或者求和(Z是离散随机变量)，假设Z是连接的，则有
+\[ \int_{Z} q(Z)\ln P(X|\theta) \,dZ = \int_{Z}q(Z)({\ln {P(X,Z|\theta) \over q(Z)}} - {\ln {P(Z|X,\theta) \over q(Z)}})\,dZ \]</p>
+
+<p>\[ \int_{Z} q(Z)\ln P(X|\theta) \,dZ = {\int_{Z}q(Z){\ln {P(X,Z|\theta) \over q(Z)}}\,dZ} - {\int_{Z}q(Z)\ln {P(Z|X,\theta) \over q(Z)}}\,dZ \]</p>
+
+<p>\[ \int_{Z} q(Z)\ln P(X|\theta) \,dZ = {\int_{Z}q(Z){\ln {P(X,Z|\theta) \over q(Z)}}\,dZ} + {\int_{Z}q(Z)\ln {q(Z) \over P(Z|X,\theta)}}\,dZ \]</p>
+
+<p>由于Z和X之间相互独立，因此有
+\[ \int_{Z}q(Z)\ln P(X|\theta)\,dZ = \int_{Z}q(Z)\,dZ \ln(X|\theta) \]
+而$$$\int_{Z}q(Z)\,dZ = 1$$$，因此有 $$$\int_{Z}q(Z)q(Z)\ln P(X|\theta)\,dZ = ln(X|\theta)$$$，则有
+\[ \ln P(X|\theta) = {\int_{Z}q(Z){\ln {P(X,Z|\theta) \over q(Z)}}\,dZ} + {\int_{Z}q(Z)\ln {q(Z) \over P(Z|X,\theta)}}\,dZ \]
+记
+\[ \zeta(q,\theta)={\int_{Z}q(Z){\ln {P(X,Z|\theta) \over q(Z)}}\,dZ}\]</p>
+
+<p>\[ KL(q||p) = {\int_{Z}q(Z)\ln {q(Z) \over P(Z|X,\theta)}}\,dZ\]
+KL是KL距离，也就是Kullback-Leibler差异（Kullback-Leibler Divergence）的简称，也叫做相对熵（Relative Entropy）。它衡量的是相同事件空间里的两个概率分布的差异情况。其物理意义是：在相同事件空间里，概率分布P(x)的事件空间，若用概率分布Q(x)编码时，平均每个基本事件（符号）编码长度增加了多少比特。KL的一个重要性质是 $$$KL(P|Q)\ge0$$$，当且仅当$$$P=Q$$$时，等号成立。</p>
+
+<p>则有\[ \ln P(X|\theta) = \zeta(q,\theta) + KL(q||p) \]</p>
+
+<p>由于\[ KL(q||p) \ge 0 \]
+则有\[ \ln P(X|\theta) \ge \zeta(q,\theta) \]
+也就是说$$$\zeta(q,\theta)$$$是$$$\ln P(X|\theta)$$$的下界。</p>
+
+<p>EM算法可以通过不断提高下界$$$\zeta(q,\theta)$$$的值来逼近$$$\ln P(X|\theta)$$$的最大值，因此EM算法分为以下两步通过迭代的方法求$$$\ln P(X|\theta)$$$的最大似然估计值：</p>
+
+<ol>
+<li>在E步中，假设当前的参数为$$$\theta ^{old}$$$，并固定参数$$$\theta ^{old}$$$不变，则最大化下界$$$\zeta(q,\theta ^{old})$$$与$$$q(Z)$$$有关，并且$$$\ln P(X|\theta ^{old})$$$与$$$q(Z)$$$不相关，因此，要使$$$\zeta(q,\theta)$$$最大，等价于使$$$KL(q||p)$$$最小，由KL距离的性质可知 $$$q(Z)=P(Z|X,\theta ^{old})$$$</li>
+<li>在M步中，固定$$$q(Z)$$$，最大化下界$$$\zeta(q,\theta)$$$与$$$\theta$$$有关，即寻找一个新的值$$$\theta ^{new}$$$使得$$$\zeta(q,\theta ^{new})$$$最大。$$$\theta ^{new}$$$会使下界$$$\zeta(q,\theta)$$$的值增大（除非已经达到最大值），并且也一定会使似然函数的值增大，因为在M步中，分布q(Z)使用的是参数$$$\theta ^{old}$$$而不是参数$$$\theta ^{new}$$$，则$$$q(Z)\ne P(Z|X,\theta ^{new}) $$$，从而$$$KL(q||p)> 0$$$，因此，似然函数增大部分的值比仅提高下界多带来的增幅大，从而能够逼近$$$\ln P(X|\theta)$$$的最大似然估计。</li>
+</ol>
+
+
+<p>在最大化$$$\zeta(q,\theta)$$$的过程中，由 $$$q(Z)=P(Z|X,\theta ^{old})$$$ 可知
+\[ \zeta(q,\theta)={\int_{Z}P(Z|X,\theta ^{old}){\ln {P(X,Z|\theta) \over P(Z|X,\theta ^{old})}}\,dZ}\]
+\[ \zeta(q,\theta)={\int_{Z}P(Z|X,\theta ^{old})\ln P(X,Z|\theta)}\,dZ - {\int_{Z}P(Z|X,\theta ^{old})\ln P(Z|X,\theta ^{old})}\,dZ\]
+由于$$${\int_{Z}P(Z|X,\theta ^{old})\ln P(Z|X,\theta ^{old})}\,dZ$$$为常数，则有
+\[ \zeta(q,\theta)={\int_{Z}P(Z|X,\theta ^{old})\ln P(X,Z|\theta)}\,dZ + const \]
+因此最大化$$$\zeta(q,\theta)$$$等价于最大化$$${\int_{Z}P(Z|X,\theta ^{old})\ln P(X,Z|\theta)}\,dZ$$$</p>
+
+<h2>3 说明</h2>
+
+<p>关于EM算法，作以下几点说明：</p>
+
+<ol>
+<li>参数的初始值可以任意选择，但需要注意的是EM算法对参数的初值是敏感的。</li>
+<li>EM算法中，E步是就函数$$${\int_{Z}P(Z|X,\theta ^{old})\ln P(X,Z|\theta)}\,dZ$$$，我们可以定义Q函数 \[ Q(\theta,\theta ^{k}) = {\int_{Z}P(Z|X,\theta ^{k})\ln P(X,Z|\theta)}\,dZ\] 表示完全数据的对数似然函数$$$\ln P(Y,Z|\theta)$$$关于给定观测数据$$$Y$$$和给定参数$$$$\theta ^{k}$$$的条件下对未观测数据$$$Z$$$的条件概率分布$$$P(Z|X,\theta ^{k})$$$的期望，因此，Q函数也可以写成如下形式\[ Q(\theta,\theta ^{k}) = E_{Z}[\ln P(X,Z|\theta)|X,\theta ^{k}]\] 变元$$$\theta$$$表示需要极大化的参数，变元$$$\theta ^{k}$$$表示参数当前的估计值。</li>
+<li>EM算法中，M步是在求$$$Q(\theta,\theta ^{k})$$$的极大化，完成一次迭代$$$\theta ^{k} \rightarrow\theta ^{k+1}$$$。</li>
+<li>EM算法迭代的停止条件一般为，给定较小的正数$$$\varepsilon _{1},\varepsilon _{2}$$$，若满足 \[\parallel \theta ^{k+1} - \theta ^{k} \parallel &lt; \varepsilon _{1}\] 或 \[\parallel Q(\theta ^{k+1},\theta ^{k}) - Q(\theta ^{k},\theta ^{k}) \parallel &lt; \varepsilon_{2}\] 则停止迭代。每次迭代其实是在求Q函数及其极大化。</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>
