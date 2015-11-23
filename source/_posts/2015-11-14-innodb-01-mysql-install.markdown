@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Innodb源码学习(1)--Mysql环境的搭建"
+title: "Innodb源码分析(1)--Mysql环境的搭建"
 date: 2015-11-14 16:39
 comments: true
 categories: 存储{db}
