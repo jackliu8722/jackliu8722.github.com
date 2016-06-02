@@ -1,0 +1,743 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Thrift网络请求包格式详解 - 精神兵的 Blog</title>
+  <meta name="author" content="jackliu">
+
+  
+  <meta name="description" content="写这篇文章的主要原因是近期项目通过Thrift进行通信时，thrift服务端解析客户端发送的数据错误，导致某些请求失败（后面解析其原因）。在查询问题原因的过程中把Thrift发送给服务端的数据包代码阅读了一下，在这里做一下笔记。 Thrift支持的数据类型 Thrift客户端与服务端通信时， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jackliu8722.github.com/blog/2016/01/06/thrift-network-package-introduce/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="精神兵的 Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$$$','$$$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">精神兵的 Blog</a></h1>
+  
+    <h2>领袖与跟风者的区别就在于创新——乔布斯</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jackliu8722.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">博客首页</a></li>
+  <li><a href="/blog/archives">博客列表</a></li>
+  <li><a href="/blog/categories/ml/">机器学习</a></li>
+  <li><a href="/blog/categories/distributed/">分布式</a></li>
+  <li><a href="/blog/categories/arch/">架构</a></li>
+  <li><a href="/blog/categories/db/">存储</a></li>
+  <li><a href="/blog/categories/java/">Java</a></li>
+  <li><a href="/blog/categories/python/">Python</a></li>
+  <li><a href="/blog/categories/linux/">Linux</a></li>
+  <li><a href="/blog/categories/math/">数学</a></li>
+  <li><a href="/blog/categories/others/">其它</a></li>
+  <li><a href="/about/">关于</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Thrift网络请求包格式详解</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-01-06T14:54:00+08:00" pubdate data-updated="true">2016年01月06日</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>写这篇文章的主要原因是近期项目通过Thrift进行通信时，thrift服务端解析客户端发送的数据错误，导致某些请求失败（后面解析其原因）。在查询问题原因的过程中把Thrift发送给服务端的数据包代码阅读了一下，在这里做一下笔记。</p>
+
+<h2>Thrift支持的数据类型</h2>
+
+<p>Thrift客户端与服务端通信时，数据包按照一定的协议进行组织，协议最基本单元就是数据类型，以下是Thrift支持的数据类型：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">TType</span> <span class="o">{</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">STOP</span>   <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">VOID</span>   <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">BOOL</span>   <span class="o">=</span> <span class="mi">2</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">BYTE</span>   <span class="o">=</span> <span class="mi">3</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">DOUBLE</span> <span class="o">=</span> <span class="mi">4</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">I16</span>    <span class="o">=</span> <span class="mi">6</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">I32</span>    <span class="o">=</span> <span class="mi">8</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">I64</span>    <span class="o">=</span> <span class="mi">10</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">STRING</span> <span class="o">=</span> <span class="mi">11</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">STRUCT</span> <span class="o">=</span> <span class="mi">12</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">MAP</span>    <span class="o">=</span> <span class="mi">13</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">SET</span>    <span class="o">=</span> <span class="mi">14</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">LIST</span>   <span class="o">=</span> <span class="mi">15</span><span class="o">;</span>
+</span><span class='line'>  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">ENUM</span>   <span class="o">=</span> <span class="mi">16</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>上面的TType类来自org.apache.thrift.protocol包，主要定义thrift目前支持的数据类型，在传输时根据应用层定义的消息按类型组织数据包</p>
+
+<h2>消息发送过程</h2>
+
+<p>假设我们定义了一个thrift idl文件，内容如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="n">namespace</span> <span class="n">java</span> <span class="n">com</span><span class="o">.</span><span class="na">test</span><span class="o">.</span><span class="na">api</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">service</span> <span class="n">Api</span><span class="o">{</span>
+</span><span class='line'>    <span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="o">,</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">test</span><span class="o">(</span><span class="mi">1</span><span class="o">:</span><span class="n">map</span><span class="o">&lt;</span><span class="n">string</span><span class="o">,</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">params</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>通过thrift生成相应的java文件，当用户调用test方法时，具体的调用流程如下：
+Api.Client.test -> Api.Client.send_test ->  TServiceClient.sendBase -> TBase.write
+下面具体介绍各方法是怎么把消息组织起来的。</p>
+
+<h4>Api.Client.test</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">test</span><span class="o">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">params</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">TException</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>  <span class="n">send_test</span><span class="o">(</span><span class="n">params</span><span class="o">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="nf">recv_test</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该接口是应用层客户端调用的，其实它的工作很简单，传递参数并调用send_test进行发送消息，发送完成后接收服务端的响应，这个操作是一个同步操作，这里暂时不做介绍。</p>
+
+<h4>Api.Client.send_test</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">send_test</span><span class="o">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">params</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">TException</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>  <span class="n">test_args</span> <span class="n">args</span> <span class="o">=</span> <span class="k">new</span> <span class="n">test_args</span><span class="o">();</span>
+</span><span class='line'>  <span class="n">args</span><span class="o">.</span><span class="na">setParams</span><span class="o">(</span><span class="n">params</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">sendBase</span><span class="o">(</span><span class="s">&quot;test&quot;</span><span class="o">,</span> <span class="n">args</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>send_test接口的工作其实也很简单，new一个参数类（参数类是thrif根据idl文件生成的），并设置应用层提供的参数，然后调用sendBase方法。</p>
+
+<h4>TServiceClient.sendBase</h4>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">protected</span> <span class="kt">void</span> <span class="nf">sendBase</span><span class="o">(</span><span class="n">String</span> <span class="n">methodName</span><span class="o">,</span> <span class="n">TBase</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">TException</span> <span class="o">{</span>
+</span><span class='line'>   <span class="k">this</span><span class="o">.</span><span class="na">oprot_</span><span class="o">.</span><span class="na">writeMessageBegin</span><span class="o">(</span><span class="k">new</span> <span class="n">TMessage</span><span class="o">(</span><span class="n">methodName</span><span class="o">,</span> <span class="o">(</span><span class="kt">byte</span><span class="o">)</span><span class="mi">1</span><span class="o">,</span> <span class="o">++</span><span class="k">this</span><span class="o">.</span><span class="na">seqid_</span><span class="o">));</span>
+</span><span class='line'>   <span class="n">args</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="k">this</span><span class="o">.</span><span class="na">oprot_</span><span class="o">);</span>
+</span><span class='line'>   <span class="k">this</span><span class="o">.</span><span class="na">oprot_</span><span class="o">.</span><span class="na">writeMessageEnd</span><span class="o">();</span>
+</span><span class='line'>   <span class="k">this</span><span class="o">.</span><span class="na">oprot_</span><span class="o">.</span><span class="na">getTransport</span><span class="o">().</span><span class="na">flush</span><span class="o">();</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该方法才是真正的组织消息包了，首先调用oprot_的writeMessageBegin将新建的TMessage对象写入到协议中，TMessage是什么？其实就是对方法名、类型和顺序号进行了封装，没做其它什么工作，具体的类如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">TMessage</span> <span class="o">{</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">name</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">final</span> <span class="kt">byte</span> <span class="n">type</span><span class="o">;</span>
+</span><span class='line'>    <span class="kd">public</span> <span class="kd">final</span> <span class="kt">int</span> <span class="n">seqid</span><span class="o">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="nf">TMessage</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">this</span><span class="o">(</span><span class="s">&quot;&quot;</span><span class="o">,</span> <span class="o">(</span><span class="kt">byte</span><span class="o">)</span><span class="mi">0</span><span class="o">,</span> <span class="mi">0</span><span class="o">);</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="nf">TMessage</span><span class="o">(</span><span class="n">String</span> <span class="n">n</span><span class="o">,</span> <span class="kt">byte</span> <span class="n">t</span><span class="o">,</span> <span class="kt">int</span> <span class="n">s</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">this</span><span class="o">.</span><span class="na">name</span> <span class="o">=</span> <span class="n">n</span><span class="o">;</span>
+</span><span class='line'>        <span class="k">this</span><span class="o">.</span><span class="na">type</span> <span class="o">=</span> <span class="n">t</span><span class="o">;</span>
+</span><span class='line'>        <span class="k">this</span><span class="o">.</span><span class="na">seqid</span> <span class="o">=</span> <span class="n">s</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="n">String</span> <span class="nf">toString</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="s">&quot;&lt;TMessage name:\&#39;&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="o">.</span><span class="na">name</span> <span class="o">+</span> <span class="s">&quot;\&#39; type: &quot;</span> <span class="o">+</span> <span class="k">this</span><span class="o">.</span><span class="na">type</span> <span class="o">+</span> <span class="s">&quot; seqid:&quot;</span> <span class="o">+</span> <span class="k">this</span><span class="o">.</span><span class="na">seqid</span> <span class="o">+</span> <span class="s">&quot;&gt;&quot;</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">equals</span><span class="o">(</span><span class="n">Object</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="n">other</span> <span class="k">instanceof</span> <span class="n">TMessage</span><span class="o">?</span><span class="k">this</span><span class="o">.</span><span class="na">equals</span><span class="o">((</span><span class="n">TMessage</span><span class="o">)</span><span class="n">other</span><span class="o">):</span><span class="kc">false</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">equals</span><span class="o">(</span><span class="n">TMessage</span> <span class="n">other</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>        <span class="k">return</span> <span class="k">this</span><span class="o">.</span><span class="na">name</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">name</span><span class="o">)</span> <span class="o">&amp;&amp;</span> <span class="k">this</span><span class="o">.</span><span class="na">type</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="na">type</span> <span class="o">&amp;&amp;</span> <span class="k">this</span><span class="o">.</span><span class="na">seqid</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="na">seqid</span><span class="o">;</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>把方法名等写入到协议后，就需要对方法的参数进行写入，参数的写入由TBase的子类实现（后面会进行分析），参数写入完成后，就完成了对协议的封装，就可以调用传输层进行消息的发送了。</p>
+
+<h4>TBase.write</h4>
+
+<p>TBase.write是一个接口，其具体的实现是由test_args类完成的，其源码如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TProtocol</span> <span class="n">oprot</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">TException</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">schemes</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">oprot</span><span class="o">.</span><span class="na">getScheme</span><span class="o">()).</span><span class="na">getScheme</span><span class="o">().</span><span class="na">write</span><span class="o">(</span><span class="n">oprot</span><span class="o">,</span> <span class="k">this</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>咦，怎么还有一层封装，那我们看看schemes是什么东东。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">Class</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">IScheme</span><span class="o">&gt;,</span> <span class="n">SchemeFactory</span><span class="o">&gt;</span> <span class="n">schemes</span> <span class="o">=</span> <span class="k">new</span> <span class="n">HashMap</span><span class="o">&lt;</span><span class="n">Class</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">IScheme</span><span class="o">&gt;,</span> <span class="n">SchemeFactory</span><span class="o">&gt;();</span>
+</span><span class='line'><span class="kd">static</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">schemes</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">StandardScheme</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="k">new</span> <span class="n">test_argsStandardSchemeFactory</span><span class="o">());</span>
+</span><span class='line'>  <span class="n">schemes</span><span class="o">.</span><span class="na">put</span><span class="o">(</span><span class="n">TupleScheme</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="k">new</span> <span class="n">test_argsTupleSchemeFactory</span><span class="o">());</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>原来是通过TProtocol的getScheme方法得到具体的scheme类作为Map的key获取SchemeFactory,然后调用相应SchemeFactory的write方法进行对参数的写入。那TProtocol的scheme是什么呢？我们看一下TProtocol的getScheme方法。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="n">Class</span><span class="o">&lt;?</span> <span class="kd">extends</span> <span class="n">IScheme</span><span class="o">&gt;</span> <span class="n">getScheme</span><span class="o">()</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">StandardScheme</span><span class="o">.</span><span class="na">class</span><span class="o">;</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>原来抽象类TProtocol将StandardScheme.class作为默认的scheme类，那就好办了，其实最终调用的是test_argsStandardSchemeFactory类的write方法对参数进行写入。我们再看看test_argsStandardSchemeFactory的write方法。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TStruct</span> <span class="n">STRUCT_DESC</span> <span class="o">=</span> <span class="k">new</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TStruct</span><span class="o">(</span><span class="s">&quot;test_args&quot;</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">private</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TField</span> <span class="n">PARAMS_FIELD_DESC</span> <span class="o">=</span> <span class="k">new</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TField</span><span class="o">(</span><span class="s">&quot;params&quot;</span><span class="o">,</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TType</span><span class="o">.</span><span class="na">MAP</span><span class="o">,</span> <span class="o">(</span><span class="kt">short</span><span class="o">)</span><span class="mi">1</span><span class="o">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TProtocol</span> <span class="n">oprot</span><span class="o">,</span> <span class="n">test_args</span> <span class="n">struct</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">TException</span> <span class="o">{</span>
+</span><span class='line'>   <span class="n">struct</span><span class="o">.</span><span class="na">validate</span><span class="o">();</span>
+</span><span class='line'>
+</span><span class='line'>   <span class="n">oprot</span><span class="o">.</span><span class="na">writeStructBegin</span><span class="o">(</span><span class="n">STRUCT_DESC</span><span class="o">);</span><span class="c1">//按照协议要求写入struct描述</span>
+</span><span class='line'>   <span class="k">if</span> <span class="o">(</span><span class="n">struct</span><span class="o">.</span><span class="na">params</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>     <span class="n">oprot</span><span class="o">.</span><span class="na">writeFieldBegin</span><span class="o">(</span><span class="n">PARAMS_FIELD_DESC</span><span class="o">);</span> <span class="c1">//按照协议要求写入fild描述</span>
+</span><span class='line'>     <span class="o">{</span>
+</span><span class='line'>          <span class="c1">//写入map对应key和value的类型，以及元素个数</span>
+</span><span class='line'>          <span class="n">oprot</span><span class="o">.</span><span class="na">writeMapBegin</span><span class="o">(</span><span class="k">new</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TMap</span><span class="o">(</span><span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TType</span><span class="o">.</span><span class="na">STRING</span><span class="o">,</span> <span class="n">org</span><span class="o">.</span><span class="na">apache</span><span class="o">.</span><span class="na">thrift</span><span class="o">.</span><span class="na">protocol</span><span class="o">.</span><span class="na">TType</span><span class="o">.</span><span class="na">STRING</span><span class="o">,</span> <span class="n">struct</span><span class="o">.</span><span class="na">params</span><span class="o">.</span><span class="na">size</span><span class="o">()));</span>
+</span><span class='line'>          <span class="c1">//遍历map，将key和value写入到协议中</span>
+</span><span class='line'>        <span class="k">for</span> <span class="o">(</span><span class="n">Map</span><span class="o">.</span><span class="na">Entry</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">String</span><span class="o">&gt;</span> <span class="n">_iter24</span> <span class="o">:</span> <span class="n">struct</span><span class="o">.</span><span class="na">params</span><span class="o">.</span><span class="na">entrySet</span><span class="o">())</span>
+</span><span class='line'>        <span class="o">{</span>
+</span><span class='line'>          <span class="n">oprot</span><span class="o">.</span><span class="na">writeString</span><span class="o">(</span><span class="n">_iter24</span><span class="o">.</span><span class="na">getKey</span><span class="o">());</span>
+</span><span class='line'>          <span class="n">oprot</span><span class="o">.</span><span class="na">writeString</span><span class="o">(</span><span class="n">_iter24</span><span class="o">.</span><span class="na">getValue</span><span class="o">());</span>
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>          <span class="n">oprot</span><span class="o">.</span><span class="na">writeMapEnd</span><span class="o">();</span>
+</span><span class='line'>     <span class="o">}</span>
+</span><span class='line'>     <span class="n">oprot</span><span class="o">.</span><span class="na">writeFieldEnd</span><span class="o">();</span>
+</span><span class='line'>   <span class="o">}</span>
+</span><span class='line'>   <span class="n">oprot</span><span class="o">.</span><span class="na">writeFieldStop</span><span class="o">();</span>
+</span><span class='line'>   <span class="n">oprot</span><span class="o">.</span><span class="na">writeStructEnd</span><span class="o">();</span>
+</span><span class='line'> <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其实代码逻辑已经非常清楚了，唯一可能还需要了解的oprot的实现，Thrift默认使用二进制协议TBinaryProtocol类写所有的数据。</p>
+
+<h2>二进制协议类TBinaryProtocol</h2>
+
+<p>二进制协议类TBinaryProtocol作为Thrift默认协议进行读写数据，下面介绍一些主要方法，便于理解协议包的数据组织。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeMessageBegin</span><span class="o">(</span><span class="n">TMessage</span> <span class="n">message</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">TException</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="o">(</span><span class="n">strictWrite_</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>       <span class="kt">int</span> <span class="n">version</span> <span class="o">=</span> <span class="n">VERSION_1</span> <span class="o">|</span> <span class="n">message</span><span class="o">.</span><span class="na">type</span><span class="o">;</span>
+</span><span class='line'>       <span class="n">writeI32</span><span class="o">(</span><span class="n">version</span><span class="o">);</span>
+</span><span class='line'>       <span class="n">writeString</span><span class="o">(</span><span class="n">message</span><span class="o">.</span><span class="na">name</span><span class="o">);</span>
+</span><span class='line'>       <span class="n">writeI32</span><span class="o">(</span><span class="n">message</span><span class="o">.</span><span class="na">seqid</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class='line'>       <span class="n">writeString</span><span class="o">(</span><span class="n">message</span><span class="o">.</span><span class="na">name</span><span class="o">);</span>
+</span><span class='line'>       <span class="n">writeByte</span><span class="o">(</span><span class="n">message</span><span class="o">.</span><span class="na">type</span><span class="o">);</span>
+</span><span class='line'>       <span class="n">writeI32</span><span class="o">(</span><span class="n">message</span><span class="o">.</span><span class="na">seqid</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeMessageEnd</span><span class="o">()</span> <span class="o">{}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该方法将版本号、方法名和顺序号写入到协议中。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeFieldBegin</span><span class="o">(</span><span class="n">TField</span> <span class="n">field</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">TException</span> <span class="o">{</span>
+</span><span class='line'>    <span class="n">writeByte</span><span class="o">(</span><span class="n">field</span><span class="o">.</span><span class="na">type</span><span class="o">);</span>
+</span><span class='line'>    <span class="n">writeI16</span><span class="o">(</span><span class="n">field</span><span class="o">.</span><span class="na">id</span><span class="o">);</span>
+</span><span class='line'> <span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeFieldEnd</span><span class="o">()</span> <span class="o">{}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该方法将参数类型和id写入到协议中。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeMapBegin</span><span class="o">(</span><span class="n">TMap</span> <span class="n">map</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">TException</span> <span class="o">{</span>
+</span><span class='line'>  <span class="n">writeByte</span><span class="o">(</span><span class="n">map</span><span class="o">.</span><span class="na">keyType</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">writeByte</span><span class="o">(</span><span class="n">map</span><span class="o">.</span><span class="na">valueType</span><span class="o">);</span>
+</span><span class='line'>  <span class="n">writeI32</span><span class="o">(</span><span class="n">map</span><span class="o">.</span><span class="na">size</span><span class="o">);</span>
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeMapEnd</span><span class="o">()</span> <span class="o">{}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>当需要写入map时，将map对应key和value的类型，以及元素个数写入到协议中。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeString</span><span class="o">(</span><span class="n">String</span> <span class="n">str</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">TException</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>      <span class="kt">byte</span><span class="o">[]</span> <span class="n">dat</span> <span class="o">=</span> <span class="n">str</span><span class="o">.</span><span class="na">getBytes</span><span class="o">(</span><span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'>      <span class="n">writeI32</span><span class="o">(</span><span class="n">dat</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+</span><span class='line'>      <span class="n">trans_</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">dat</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">dat</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UnsupportedEncodingException</span> <span class="n">uex</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="k">new</span> <span class="nf">TException</span><span class="o">(</span><span class="s">&quot;JVM DOES NOT SUPPORT UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>将string写入到协议中，首先写入string的长度，然后再写入string的字节数组。</p>
+
+<p>其它方法就不在这里一一列出了，大家可以通过看源码进行了解。</p>
+
+<h2>参数Map&lt;String,String>的消息格式</h2>
+
+<p>下面我们以上面idl文件中test方法的参数作为例子，给出具体的协议格式，如下图：</p>
+
+<p><img class="center" src="/images/2016-06/thrift-protocol-format.png"></p>
+
+<h2>开篇中的问题</h2>
+
+<p>在本文开始的时候有提到，我们业务同学在使用thrift进行远程通信时，部分请求在服务端抛出了消息格式解析失败的异常。到底是什么原因呢？容我慢慢道来。我们接口传递的参数类型为Map&lt;String,String>，一般情况是用HashMap来实例化Map，我们知道HashMap的value是可以为NULL的，我们再看看writeString方法；</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='java'><span class='line'><span class="kd">public</span> <span class="kt">void</span> <span class="nf">writeString</span><span class="o">(</span><span class="n">String</span> <span class="n">str</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">TException</span> <span class="o">{</span>
+</span><span class='line'>  <span class="k">try</span> <span class="o">{</span>
+</span><span class='line'>      <span class="kt">byte</span><span class="o">[]</span> <span class="n">dat</span> <span class="o">=</span> <span class="n">str</span><span class="o">.</span><span class="na">getBytes</span><span class="o">(</span><span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'>      <span class="n">writeI32</span><span class="o">(</span><span class="n">dat</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+</span><span class='line'>      <span class="n">trans_</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">dat</span><span class="o">,</span> <span class="mi">0</span><span class="o">,</span> <span class="n">dat</span><span class="o">.</span><span class="na">length</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">UnsupportedEncodingException</span> <span class="n">uex</span><span class="o">)</span> <span class="o">{</span>
+</span><span class='line'>      <span class="k">throw</span> <span class="k">new</span> <span class="nf">TException</span><span class="o">(</span><span class="s">&quot;JVM DOES NOT SUPPORT UTF-8&quot;</span><span class="o">);</span>
+</span><span class='line'>  <span class="o">}</span>
+</span><span class='line'><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>看到没有，writeString方法没有做NULL判断，那么当我们传递的参数为空时，会向上抛出异常NullPointerException，而在writeString没有进行处理，则会抛向test_argsStandardSchemeFactory的write方法中，而该类也未进行处理，则继续向上抛。通过跟踪源码发现，最终都未对该异常进行处理，那么最后当前客户端只是把部分数据写入到了协议的缓存中，且未调用TProtocol的flush方法进行发送。</p>
+
+<p>当有新的调用时，会继续往该协议中写数据，如果这时Map中不存在为NULL的值，则会写入成功，然后调用flush方法将数据通过网络发送给服务端。这里协议数据包括两部分，第一部分是前一次写失败但有部分写入的数据，第二部分是一个完整的数据。当服务端接收到数据后通过协议进行解析时，是从第一部分开始的，由于数据不完整会造成解析失败，后面部分的数据也不会再进行处理了，这样的话就造成两个请求失败了。</p>
+
+<p>以上就是问题的原因，最终的解决方法很简单，通知业务同学修改代码，对插入map的value进行空处理。更新代码后，此问题不再出现。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jackliu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-01-06T14:54:00+08:00" pubdate data-updated="true">2016年01月06日</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/java/'>Java</a>, <a class='category' href='/blog/categories/distributed/'>分布式</a>, <a class='category' href='/blog/categories/arch/'>架构</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+</div>
+<hr style="border-bottom:1px dotted #bdbabd;height:1px;border-top:0px;border-left:0px;border-right:0px;" />
+
+
+ 
+      <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+	<span class="jiathis_txt">分享到：</span>
+	<a class="jiathis_button_tools_1"></a>
+	<a class="jiathis_button_tools_2"></a>
+	<a class="jiathis_button_tools_3"></a>
+	<a class="jiathis_button_tools_4"></a>
+	<a href="http://www.jiathis.com/share?uid=1836686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=1355984157367920" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+<!-- UJian Button BEGIN -->
+	<div class="ujian-hook"></div>
+	<script type="text/javascript" src="http://v1.ujian.cc/code/ujian.js"></script>
+<!-- UJian Button END -->
+
+  
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/11/14/innodb-01-mysql-install/" title="Previous Post: Innodb源码分析(1)--Mysql环境的搭建">&laquo; Innodb源码分析(1)--Mysql环境的搭建</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+<section>
+<h1>博客分类</h1>
+<ul>
+  <li><a href='/blog/categories/java/'>Java (2)</a></li>
+  <li><a href='/blog/categories/linux/'>Linux (2)</a></li>
+  <li><a href='/blog/categories/Python/'>Python (1)</a></li>
+  <li><a href='/blog/categories/others/'>其它 (3)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (9)</a></li>
+  <li><a href='/blog/categories/db/'>存储 (1)</a></li>
+  <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
+  <li><a href='/blog/categories/arch/'>架构 (2)</a></li>
+</ul>
+</section>
+
+<section>
+  <h1>最近博文</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/01/06/thrift-network-package-introduce/">Thrift网络请求包格式详解</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/11/14/innodb-01-mysql-install/">Innodb源码分析(1)--Mysql环境的搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/05/04/wei-xin-hong-bao-yuan-li/">微信红包原理</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/">Cassandra架构与源码分析(一)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/18/merkle-tree/">Merkle Tree</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>新浪微博</h1>
+  <ul id="weibo">
+    <li>
+      <iframe 
+        width="100%" 
+        height="550" 
+        class="share_self" 
+        frameborder="0" 
+        scrolling="no" 
+        src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=1&speed=0&skin=1&isTitle=1&noborder=1&isWeibo=1&isFans=1&uid=1835292725&verifier=d90a04d3&dpc=1">
+      </iframe>
+    </li>
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+<section>
+<h1>发表评论</h1>
+ <div class="ds-thread"></div>
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"yangdd"};
+  (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+  </script>
+
+</section>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - jackliu -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
