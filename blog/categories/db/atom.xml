@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[博客分类: 存储 | 精神兵的 Blog]]></title>
+  <link href="http://jackliu8722.github.com/blog/categories/db/atom.xml" rel="self"/>
+  <link href="http://jackliu8722.github.com/"/>
+  <updated>2016-06-04T12:14:05+08:00</updated>
+  <id>http://jackliu8722.github.com/</id>
+  <author>
+    <name><![CDATA[jackliu]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Innodb源码分析(1)--Mysql环境的搭建]]></title>
+    <link href="http://jackliu8722.github.com/blog/2015/11/14/innodb-01-mysql-install/"/>
+    <updated>2015-11-14T16:39:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2015/11/14/innodb-01-mysql-install</id>
+    <content type="html"><![CDATA[<p>最近一直在研究Innodb的源码，主要的目的为了了解一种存储系统的实现，同时希望在工作当中能够学以致用。Innodb已经成为了Mysql的默认存储引擎，而且市面上各大互联网公司都在使用该存储引擎，因此花点时间研究一下还是非常有必要的。</p>
+
+<p>要想深入的理解Innodb的精髓，在学习的过程中不得不对源码进行修改并编译调试，因此首先就需要编译安装mysql,下面介绍一下mysql编译安装的过程。</p>
+
+<h2>源码下载</h2>
+
+<p>首先从mysql的官网上<a href="http://dev.mysql.com/downloads">http://dev.mysql.com/downloads</a>下载相应版本的源码，本文下载的源码包 mysql-5.6.20.tar.gz</p>
+
+<h2>解压</h2>
+
+<p>假设我们下载好的源码在~/workspace/目录下，执行以下操作将源码解压
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jackliu8722:~<span class="nv">$ </span><span class="nb">cd </span>workspace
+</span><span class='line'>jackliu8722:~/workspace<span class="nv">$ </span>tar -zxvf mysql-5.6.20.tar.gz
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h2>编译</h2>
+
+<p>进入mysql源码目录并编译
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jackliu8722:~/workspace<span class="nv">$ </span><span class="nb">cd </span>mysql-5.6.20
+</span><span class='line'>jackliu8722:~/workspce/mysql-5.6.20<span class="nv">$ </span>cmake . <span class="se">\&lt;</span>/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;pre&gt;&lt;code&gt;    -DCMAKE_INSTALL_PREFIX<span class="o">=</span>/home/jackliu8722/workspace/mysql-5.6.20-bin <span class="se">\ </span>       -DMYSQL_DATADIR<span class="o">=</span>/home/jackliu8722/workspace/mysql-5.6.20-data <span class="se">\ </span>       -DMYSQL_UNIX_ADDR<span class="o">=</span>/home/jackliu8722/workspace/mysql-5.6.20-bin/mysqld-5.6.20.sock <span class="se">\ </span>       -DWITH_INNOBASE_STORAGE_ENGINE<span class="o">=</span>1 -DWITH_DEBUG<span class="o">=</span>1
+</span><span class='line'>&lt;/code&gt;&lt;/pre&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+上面操作完成之后执行以下操作进行编译安装
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jackliu8722:~/workspace/mysql-5.6.20<span class="nv">$ </span>make &amp;amp;&amp;amp; make install
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+等待一会儿如果没有遇到什么错误，则mysql就编译完成了，并且安装到了/home/jackliu8722/workspace/mysql-5.6.20-bin/ 目录下。如果遇到什么依赖错误，自行安装重试即可，这里就不多介绍了。</p>
+
+<h2>启动mysql服务</h2>
+
+<p>编译安装完成之后，在启动mysql服务之前，需要初始化数据库，按以下操作即可。
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jackliu8722:~/workspace/mysql-5.6.20<span class="nv">$ </span><span class="nb">cd</span> ../mysql-5.6.20-bin
+</span><span class='line'>jackliu8722:~/workspace/mysql-5.6.20-bin<span class="nv">$ </span>./scripts/mysql_install_db --user<span class="o">=</span>mysql
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>然后启动mysql服务
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>jackliu8722:~/workspace/mysql-5.6.20-bin<span class="nv">$ </span>support-files/mysql.server start
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>通过以上几步操作mysql的编译安装就完成了，为以验证是否安装成功，可以通过mysql客户端连接进行验证，如果能够连接成功说明安装已经成功了，就可以进行后续的源码学习了。</p>
+]]></content>
+  </entry>
+  
+</feed>

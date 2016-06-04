@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[博客分类: 其它 | 精神兵的 Blog]]></title>
+  <link href="http://jackliu8722.github.com/blog/categories/others/atom.xml" rel="self"/>
+  <link href="http://jackliu8722.github.com/"/>
+  <updated>2016-06-04T12:14:05+08:00</updated>
+  <id>http://jackliu8722.github.com/</id>
+  <author>
+    <name><![CDATA[jackliu]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[在Octopress中显示数学公式]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/"/>
+    <updated>2013-09-18T23:17:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi</id>
+    <content type="html"><![CDATA[<p>由于个人对机器学习比较感兴趣，而机器学习的学习过程中会遇到非常多的数学公式，因此，写博客的过程中离不开公式的撰写。</p>
+
+<p>平时写博客是在Mou下进行的，而Mou是支持<a href="http://www.latex-project.org/"><strong>LaTeX</strong></a>的，因此，通过Mou写的公式在博客未发布前是可能预览的。但是博客发布，显示的却不是公式，而是一串字符串，在网上找了下，原来Octopress要支持数学公式是需要安装插件的，在网上找了找记下配置过程和大家分享。</p>
+
+<h3>安装kramdown</h3>
+
+<p>kramdown是什么，我这里就不多介绍了，有兴趣大家可以点击<a href="http://kramdown.rubyforge.org/"><strong>这里</strong></a>。
+通过以下命令安装kramdown包
+<div class='bogus-wrapper'><notextile><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>gem install kramdown</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>待安装完成之后进入 <em>OCTOPRESS_PATH/source/_includes/custom/</em> 目录，<em>OCTOPRESS_PATH</em>是Octopress的根目录。在该目录下找到head.html文件，在该文件中添加以下内容：
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="o">&lt;</span><span class="err">/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c">&lt;!--</span> <span class="nx">mathjax</span> <span class="nx">config</span> <span class="nx">similar</span> <span class="nx">to</span> <span class="nx">math</span><span class="p">.</span><span class="nx">stackexchange</span> <span class="o">--&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>  <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class='line'>    <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>      <span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$$$&#39;</span><span class="p">,</span><span class="s1">&#39;$$$&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;\\(&quot;</span><span class="p">,</span><span class="s2">&quot;\\)&quot;</span><span class="p">]</span> <span class="p">],</span>
+</span><span class='line'>      <span class="nx">processEscapes</span><span class="o">:</span> <span class="kc">true</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class='line'>      <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">skipTags</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;script&#39;</span><span class="p">,</span> <span class="s1">&#39;noscript&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">,</span> <span class="s1">&#39;textarea&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span><span class="p">]</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/x-mathjax-config&quot;</span><span class="o">&gt;</span>
+</span><span class='line'>    <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Queue</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>        <span class="kd">var</span> <span class="nx">all</span> <span class="o">=</span> <span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">getAllJax</span><span class="p">(),</span> <span class="nx">i</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">for</span><span class="p">(</span><span class="nx">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">all</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="nx">i</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="nx">all</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">SourceElement</span><span class="p">().</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">className</span> <span class="o">+=</span> <span class="s1">&#39; has-jax&#39;</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>    <span class="p">});</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">script</span> <span class="nx">type</span><span class="o">=</span><span class="s2">&quot;text/javascript&quot;</span>
+</span><span class='line'>   <span class="nx">src</span><span class="o">=</span><span class="s2">&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&quot;</span><span class="o">&gt;</span>
+</span><span class='line'><span class="o">&lt;</span><span class="err">/script&gt;</span>
+</span><span class='line'>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>配置完成之后，就可以在Mou中使用LaTeX来撰写数学公式，并且发布后能够正常显示。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Octopress的安装与配置]]></title>
+    <link href="http://jackliu8722.github.com/blog/2013/09/05/octopressde-an-zhuang-yu-pei-zhi/"/>
+    <updated>2013-09-05T17:35:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2013/09/05/octopressde-an-zhuang-yu-pei-zhi</id>
+    <content type="html"><![CDATA[<p>  Octopress在这里就不多介绍了，它是一个轻量级的开源博客系统，用Ruby实现的。如果想搭建自己的博客系统，可以选择这个开源的东东，而且还可以托管到github上，相当的不错。想了解更多的信息， 在google里搜搜就知道了。
+  Octopress的安装与配置网上有大量的文章，我这里也不再单独写个文章来介绍，其实写出来与网上的安装过程大同小异，这里只是记录了安装与配置的相关文章地址，方便大家。鄙视者可以拍砖的哟！！！！</p>
+
+<p>1 <a href="http://octopress.org/"><strong>Octopress主页</strong></a></p>
+
+<p>2  <a href="http://www.cnblogs.com/rubylouvre/archive/2012/06/10/2543706.html"><strong>利用GitHub Pages安装部署Octopress博客</strong></a></p>
+
+<p>3 <a href="http://www.360doc.com/content/12/0216/17/1016783_187135339.shtml"><strong>Octopress个性化配置</strong></a></p>
+
+<p>4 <a href="http://caok1231.iteye.com/blog/1565853"><strong>为Octopress增加文章分类</strong></a></p>
+
+<p>5 <a href="http://geron.heroku.com/blog/2012/03/octo-cate-cn-spo/"><strong>Octopress博客分类添加中文支持</strong></a></p>
+
+<p>6 <a href="http://blog.sprabbit.com/blog/2012/03/23/octopress/"><strong>Octopress添加中文支持另外一种方法</strong></a></p>
+
+<p>  目前就这些吧，今后发现什么好的插件再更新，哈哈。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Hello Octopress]]></title>
+    <link href="http://jackliu8722.github.com/blog/2012/12/17/hello-octopress/"/>
+    <updated>2012-12-17T20:16:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2012/12/17/hello-octopress</id>
+    <content type="html"><![CDATA[<h2>引言</h2>
+
+<p>   以前光顾着学习了，不爱写博客，马上就要工作了，得养成写博客总结的习惯，从现在做起吧。Hello World大家都见过很多了，今天我来写个Hello Octopress，其实大家都明白，跟Hello World没啥区别，让我们开始吧。</p>
+
+<h2>Hello Octopress</h2>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>hello_octopress.py </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">HelloOctopress</span><span class="p">:</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class='line'>    <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Hello Octopress!&quot;</span>
+</span><span class='line'><span class="k">def</span> <span class="nf">print</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class='line'>    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+</span><span class='line'>        <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">ho</span> <span class="o">=</span> <span class="n">HelloOctopress</span><span class="p">()</span>
+</span><span class='line'><span class="n">ho</span><span class="o">.</span><span class="k">print</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h2>结论</h2>
+
+<p>哈哈，代码就几行，Hello Octopress完成！
+期待自己写一篇精彩的文章！
+Good luck!</p>
+]]></content>
+  </entry>
+  
+</feed>
