@@ -1,0 +1,697 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>fabric共识机制分析1 - 精神兵的 Blog</title>
+  <meta name="author" content="jackliu">
+
+  
+  <meta name="description" content="共识机制的实现提供了一系列的接口，下列首先对接口进行一下简单的介绍，详见注释。 1 ExecutionConsumer接口 1
+2
+3
+4
+5
+6
+7
+// ExecutionConsumer接口实现异步回调的功能
+type ExecutionConsumer interface { &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jackliu8722.github.com/blog/2016/10/13/fabric-consensus-analysis-1/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="精神兵的 Blog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$$$','$$$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">精神兵的 Blog</a></h1>
+  
+    <h2>领袖与跟风者的区别就在于创新——乔布斯</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jackliu8722.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">博客首页</a></li>
+  <li><a href="/blog/archives">博客列表</a></li>
+  <li><a href="/blog/categories/ml/">机器学习</a></li>
+  <li><a href="/blog/categories/distributed/">分布式</a></li>
+  <li><a href="/blog/categories/arch/">架构</a></li>
+  <li><a href="/blog/categories/db/">存储</a></li>
+  <li><a href="/blog/categories/java/">Java</a></li>
+  <li><a href="/blog/categories/python/">Python</a></li>
+  <li><a href="/blog/categories/linux/">Linux</a></li>
+  <li><a href="/blog/categories/math/">数学</a></li>
+  <li><a href="/blog/categories/blockchain/">区块链</a></li>
+  <li><a href="/blog/categories/others/">其它</a></li>
+  <li><a href="/about/">关于</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Fabric共识机制分析1</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-10-13T18:25:00+08:00" pubdate data-updated="true">2016年10月13日</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>共识机制的实现提供了一系列的接口，下列首先对接口进行一下简单的介绍，详见注释。</p>
+
+<h2>1 ExecutionConsumer接口</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="c1">// ExecutionConsumer接口实现异步回调的功能</span>
+</span><span class='line'><span class="k">type</span> <span class="n">ExecutionConsumer</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Executed</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{})</span>                                <span class="c1">// 事务成功执行完成后调用</span>
+</span><span class='line'>  <span class="n">Committed</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">target</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">BlockchainInfo</span><span class="p">)</span>    <span class="c1">// 事务成功commit之后调用</span>
+</span><span class='line'>  <span class="n">RolledBack</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{})</span>                              <span class="c1">// 事务成功回滚之后调用</span>
+</span><span class='line'>  <span class="n">StateUpdated</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">target</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">BlockchainInfo</span><span class="p">)</span> <span class="c1">// 状态转换完成之后调用,如果参数为nil，说明转换失败，并要提供新的target</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该接口中用到了pb.BlockchainInfo，pb.BlockchainInfo是通过protobuf定义生成，表示区块的信息，其详细定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="c1">// 区块链账本的信息：高度、当前区块的hash、前一个区块的hash</span>
+</span><span class='line'><span class="k">type</span> <span class="n">BlockchainInfo</span> <span class="k">struct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Height</span>            <span class="nb">uint64</span> <span class="s">`protobuf:&quot;varint,1,opt,name=height&quot; json:&quot;height,omitempty&quot;`</span>
+</span><span class='line'>  <span class="n">CurrentBlockHash</span>  <span class="p">[]</span><span class="nb">byte</span> <span class="s">`protobuf:&quot;bytes,2,opt,name=currentBlockHash,proto3&quot; json:&quot;currentBlockHash,omitempty&quot;`</span>
+</span><span class='line'>  <span class="n">PreviousBlockHash</span> <span class="p">[]</span><span class="nb">byte</span> <span class="s">`protobuf:&quot;bytes,3,opt,name=previousBlockHash,proto3&quot; json:&quot;previousBlockHash,omitempty&quot;`</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>2 Consenter接口</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Consenter</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">RecvMsg</span><span class="p">(</span><span class="n">msg</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">senderHandle</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'>  <span class="n">ExecutionConsumer</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Consenter接口用于从网络上接上消息，每个共识plugin必须实现该接口。当其它节点通过gRPC发送消息时，当前节点对接受到的消息依次调用RecvMsg方法进行处理，该方法需要提供两个参数：消息内容和发送节点的信息，对应的结构类分别为pb.Message和pb.PeerID，其详细定义见如下代码和注释：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="c1">// 消息结构类</span>
+</span><span class='line'><span class="k">type</span> <span class="n">Message</span> <span class="k">struct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 消息类型</span>
+</span><span class='line'>  <span class="n">Type</span>      <span class="n">Message_Type</span>               <span class="s">`protobuf:&quot;varint,1,opt,name=type,enum=protos.Message_Type&quot; json:&quot;type,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 时间</span>
+</span><span class='line'>  <span class="n">Timestamp</span> <span class="p">*</span><span class="n">google_protobuf</span><span class="p">.</span><span class="n">Timestamp</span> <span class="s">`protobuf:&quot;bytes,2,opt,name=timestamp&quot; json:&quot;timestamp,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 消息内容</span>
+</span><span class='line'>  <span class="n">Payload</span>   <span class="p">[]</span><span class="nb">byte</span>                     <span class="s">`protobuf:&quot;bytes,3,opt,name=payload,proto3&quot; json:&quot;payload,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 消息签名</span>
+</span><span class='line'>  <span class="n">Signature</span> <span class="p">[]</span><span class="nb">byte</span>                     <span class="s">`protobuf:&quot;bytes,4,opt,name=signature,proto3&quot; json:&quot;signature,omitempty&quot;`</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 发送者节点信息</span>
+</span><span class='line'><span class="k">type</span> <span class="n">PeerID</span> <span class="k">struct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 发送者名称</span>
+</span><span class='line'>  <span class="n">Name</span> <span class="nb">string</span> <span class="s">`protobuf:&quot;bytes,1,opt,name=name&quot; json:&quot;name,omitempty&quot;`</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Consenter接口还包含了ExecutionConsumer接口的方法，这里就不多介绍了。</p>
+
+<h2>3 Inquirer接口</h2>
+
+<p>Inquirer接口主要是获取网络节点信息，详细定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Inquirer</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 获取节点信息</span>
+</span><span class='line'>  <span class="n">GetNetworkInfo</span><span class="p">()</span> <span class="p">(</span><span class="n">self</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerEndpoint</span><span class="p">,</span> <span class="n">network</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerEndpoint</span><span class="p">,</span> <span class="n">err</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 获取节点ID</span>
+</span><span class='line'>  <span class="n">GetNetworkHandles</span><span class="p">()</span> <span class="p">(</span><span class="n">self</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">,</span> <span class="n">network</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">,</span> <span class="n">err</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>pg.PeerEndpoint存储了节点的信息，其定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">PeerEndpoint</span> <span class="k">struct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 节点ID</span>
+</span><span class='line'>  <span class="n">ID</span>      <span class="p">*</span><span class="n">PeerID</span>           <span class="s">`protobuf:&quot;bytes,1,opt,name=ID&quot; json:&quot;ID,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 节点地址 ip:port</span>
+</span><span class='line'>  <span class="n">Address</span> <span class="nb">string</span>            <span class="s">`protobuf:&quot;bytes,2,opt,name=address&quot; json:&quot;address,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 节点类型</span>
+</span><span class='line'>  <span class="n">Type</span>    <span class="n">PeerEndpoint_Type</span> <span class="s">`protobuf:&quot;varint,3,opt,name=type,enum=protos.PeerEndpoint_Type&quot; json:&quot;type,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 公钥ID</span>
+</span><span class='line'>  <span class="n">PkiID</span>   <span class="p">[]</span><span class="nb">byte</span>            <span class="s">`protobuf:&quot;bytes,4,opt,name=pkiID,proto3&quot; json:&quot;pkiID,omitempty&quot;`</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>4 Communicator接口</h2>
+
+<p>Communicator接口提供了向节点广播和单播消息的方法，具体定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Communicator</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 向网络中的其它节点广播消息</span>
+</span><span class='line'>  <span class="n">Broadcast</span><span class="p">(</span><span class="n">msg</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">peerType</span> <span class="n">pb</span><span class="p">.</span><span class="n">PeerEndpoint_Type</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'>  <span class="c1">// 向指定的节点发送消息</span>
+</span><span class='line'>  <span class="n">Unicast</span><span class="p">(</span><span class="n">msg</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">receiverHandle</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>5 NetworkStack接口</h2>
+
+<p>NetworkStack接口的方法来自于Communicator接口和Inquirer接口，主要是发送消息和获取消息的一个封装。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">NetworkStack</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Communicator</span>
+</span><span class='line'>  <span class="n">Inquirer</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>6 SecurityUtils接口</h2>
+
+<p>SecurityUtils接口用于对消息进行签名和验证。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">SecurityUtils</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Sign</span><span class="p">(</span><span class="n">msg</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">Verify</span><span class="p">(</span><span class="n">peerID</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">,</span> <span class="n">signature</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">message</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>7 ReadOnlyLedger接口</h2>
+
+<p>ReadOnlyLedger接口用于访问区块链的信息，只能进行读取不能进行写操作，详细定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">ReadOnlyLedger</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 根据ID获取一个区块</span>
+</span><span class='line'>  <span class="n">GetBlock</span><span class="p">(</span><span class="n">id</span> <span class="nb">uint64</span><span class="p">)</span> <span class="p">(</span><span class="n">block</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">Block</span><span class="p">,</span> <span class="n">err</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 获取区块的大小</span>
+</span><span class='line'>  <span class="n">GetBlockchainSize</span><span class="p">()</span> <span class="nb">uint64</span>
+</span><span class='line'>  <span class="c1">// 获取区块的高度和hash等信息</span>
+</span><span class='line'>  <span class="n">GetBlockchainInfo</span><span class="p">()</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">BlockchainInfo</span>
+</span><span class='line'>  <span class="c1">// 获取区块的数据</span>
+</span><span class='line'>  <span class="n">GetBlockchainInfoBlob</span><span class="p">()</span> <span class="p">[]</span><span class="nb">byte</span>
+</span><span class='line'>  <span class="c1">// 获取区块的haader的meta信息</span>
+</span><span class='line'>  <span class="n">GetBlockHeadMetadata</span><span class="p">()</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>pb.Block表示一个区块，包括版本、hash值、transaction等，具体这里就不多介绍了。</p>
+
+<h2>8 LegacyExecutor接口</h2>
+
+<p>LegacyExecutor接口用于执行事务相关的保重，会修改账本的内容，提供的方法如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">LegacyExecutor</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 开启一个事务，并提供事务id</span>
+</span><span class='line'>  <span class="n">BeginTxBatch</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{})</span> <span class="n">error</span>
+</span><span class='line'>  <span class="c1">// 执行事务id</span>
+</span><span class='line'>  <span class="n">ExecTxs</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">txs</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">Transaction</span><span class="p">)</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 提交事务id</span>
+</span><span class='line'>  <span class="n">CommitTxBatch</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">metadata</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="p">(*</span><span class="n">pb</span><span class="p">.</span><span class="n">Block</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 回滚事务id</span>
+</span><span class='line'>  <span class="n">RollbackTxBatch</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{})</span> <span class="n">error</span>
+</span><span class='line'>  <span class="c1">// 事务提交前的预览</span>
+</span><span class='line'>  <span class="n">PreviewCommitTxBatch</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">metadata</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>9 Executor接口</h2>
+
+<p>Executor接口最终会替换掉老的事务执行接口，也就是LegacyExecutor接口。调用LegacyExecutor接口进行事务操作时，为了避免资源竞争和损坏账本，必须与状态转移进行协调。（个人理解就是需要锁来进行协调）</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Executor</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 获取所需要的资源</span>
+</span><span class='line'>  <span class="n">Start</span><span class="p">()</span>
+</span><span class='line'>  <span class="c1">// 释放所占有的资源                            </span>
+</span><span class='line'>  <span class="n">Halt</span><span class="p">()</span>
+</span><span class='line'>  <span class="c1">// 执行一系列的事务                           </span>
+</span><span class='line'>  <span class="n">Execute</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">txs</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">Transaction</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 事务执行完成之后进行提交</span>
+</span><span class='line'>  <span class="n">Commit</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">metadata</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 事务的回滚操作</span>
+</span><span class='line'>  <span class="n">Rollback</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{})</span>
+</span><span class='line'>  <span class="c1">// 更新状态</span>
+</span><span class='line'>  <span class="n">UpdateState</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">target</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">BlockchainInfo</span><span class="p">,</span> <span class="n">peers</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>10 LedgerManager接口</h2>
+
+<p>LedgerManager接口用于管理账本的状态。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">LedgerManager</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 使账本为无效状态，在该状态应该拒绝查询</span>
+</span><span class='line'>  <span class="n">InvalidateState</span><span class="p">()</span>
+</span><span class='line'>  <span class="c1">// 使用账本为有效状态，当前状态下应该恢复为可提供查询操作</span>
+</span><span class='line'>  <span class="n">ValidateState</span><span class="p">()</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>11 StatePersistor接口</h2>
+
+<p>StatePersistor接口用于保存共识状态，防止进程崩溃丢失状态。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">StatePersistor</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 存储状态</span>
+</span><span class='line'>  <span class="n">StoreState</span><span class="p">(</span><span class="n">key</span> <span class="nb">string</span><span class="p">,</span> <span class="n">value</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'>  <span class="c1">// 读取状态</span>
+</span><span class='line'>  <span class="n">ReadState</span><span class="p">(</span><span class="n">key</span> <span class="nb">string</span><span class="p">)</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 按前缀读取状态信息</span>
+</span><span class='line'>  <span class="n">ReadStateSet</span><span class="p">(</span><span class="n">prefix</span> <span class="nb">string</span><span class="p">)</span> <span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="nb">string</span><span class="p">][]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 删除状态</span>
+</span><span class='line'>  <span class="n">DelState</span><span class="p">(</span><span class="n">key</span> <span class="nb">string</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>12 Stack接口</h2>
+
+<p>Stack接口仅仅是对共识plugin需要实现的接口进行了一层封装，具体如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Stack</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">NetworkStack</span>
+</span><span class='line'>  <span class="n">SecurityUtils</span>
+</span><span class='line'>  <span class="n">Executor</span>
+</span><span class='line'>  <span class="n">LegacyExecutor</span>
+</span><span class='line'>  <span class="n">LedgerManager</span>
+</span><span class='line'>  <span class="n">ReadOnlyLedger</span>
+</span><span class='line'>  <span class="n">StatePersistor</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>以上是对consensus的接口的介绍，目前fabric提供了两种共识算法的实现，分别是noops和pbft，noops主要是针对单节点的实现，主要用于测试；而pbft是一种拜占庭容错算法，用于多节点的共识机制。</p>
+
+<p>fabric多节点的共识机制使用的是pbft。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jackliu</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-10-13T18:25:00+08:00" pubdate data-updated="true">2016年10月13日</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/blockchain/'>区块链</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+</div>
+<hr style="border-bottom:1px dotted #bdbabd;height:1px;border-top:0px;border-left:0px;border-right:0px;" />
+
+
+ 
+      <!-- JiaThis Button BEGIN -->
+<div class="jiathis_style">
+	<span class="jiathis_txt">分享到：</span>
+	<a class="jiathis_button_tools_1"></a>
+	<a class="jiathis_button_tools_2"></a>
+	<a class="jiathis_button_tools_3"></a>
+	<a class="jiathis_button_tools_4"></a>
+	<a href="http://www.jiathis.com/share?uid=1836686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=1355984157367920" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+<!-- UJian Button BEGIN -->
+	<div class="ujian-hook"></div>
+	<script type="text/javascript" src="http://v1.ujian.cc/code/ujian.js"></script>
+<!-- UJian Button END -->
+
+  
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/01/06/thrift-network-package-introduce/" title="Previous Post: Thrift网络请求包格式详解">&laquo; Thrift网络请求包格式详解</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+<section>
+<h1>博客分类</h1>
+<ul>
+  <li><a href='/blog/categories/java/'>Java (2)</a></li>
+  <li><a href='/blog/categories/linux/'>Linux (2)</a></li>
+  <li><a href='/blog/categories/Python/'>Python (1)</a></li>
+  <li><a href='/blog/categories/others/'>其它 (3)</a></li>
+  <li><a href='/blog/categories/distributed/'>分布式 (9)</a></li>
+  <li><a href='/blog/categories/blockchain/'>区块链 (1)</a></li>
+  <li><a href='/blog/categories/db/'>存储 (1)</a></li>
+  <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
+  <li><a href='/blog/categories/arch/'>架构 (2)</a></li>
+</ul>
+</section>
+
+<section>
+  <h1>最近博文</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/10/13/fabric-consensus-analysis-1/">fabric共识机制分析1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/01/06/thrift-network-package-introduce/">Thrift网络请求包格式详解</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/11/14/innodb-01-mysql-install/">Innodb源码分析(1)--Mysql环境的搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/05/04/wei-xin-hong-bao-yuan-li/">微信红包原理</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/">Cassandra架构与源码分析(一)</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>新浪微博</h1>
+  <ul id="weibo">
+    <li>
+      <iframe 
+        width="100%" 
+        height="550" 
+        class="share_self" 
+        frameborder="0" 
+        scrolling="no" 
+        src="http://widget.weibo.com/weiboshow/index.php?language=&width=0&height=550&fansRow=2&ptype=1&speed=0&skin=1&isTitle=1&noborder=1&isWeibo=1&isFans=1&uid=1835292725&verifier=d90a04d3&dpc=1">
+      </iframe>
+    </li>
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+<section>
+<h1>发表评论</h1>
+ <div class="ds-thread"></div>
+  <script type="text/javascript">
+  var duoshuoQuery = {short_name:"yangdd"};
+  (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.src = 'http://static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+  </script>
+
+</section>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - jackliu -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

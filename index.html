@@ -9,7 +9,15 @@
   <meta name="author" content="jackliu">
 
   
-  <meta name="description" content="写这篇文章的主要原因是近期项目通过Thrift进行通信时，thrift服务端解析客户端发送的数据错误，导致某些请求失败（后面解析其原因）。在查询问题原因的过程中把Thrift发送给服务端的数据包代码阅读了一下，在这里做一下笔记。 Thrift支持的数据类型 Thrift客户端与服务端通信时， &hellip;">
+  <meta name="description" content="共识机制的实现提供了一系列的接口，下列首先对接口进行一下简单的介绍，详见注释。 1 ExecutionConsumer接口 1
+2
+3
+4
+5
+6
+7
+// ExecutionConsumer接口实现异步回调的功能
+type ExecutionConsumer interface { &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -97,6 +105,7 @@
   <li><a href="/blog/categories/python/">Python</a></li>
   <li><a href="/blog/categories/linux/">Linux</a></li>
   <li><a href="/blog/categories/math/">数学</a></li>
+  <li><a href="/blog/categories/blockchain/">区块链</a></li>
   <li><a href="/blog/categories/others/">其它</a></li>
   <li><a href="/about/">关于</a></li>
 </ul>
@@ -106,6 +115,399 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/10/13/fabric-consensus-analysis-1/">Fabric共识机制分析1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-10-13T18:25:00+08:00" pubdate data-updated="true">2016年10月13日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>共识机制的实现提供了一系列的接口，下列首先对接口进行一下简单的介绍，详见注释。</p>
+
+<h2>1 ExecutionConsumer接口</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="c1">// ExecutionConsumer接口实现异步回调的功能</span>
+</span><span class='line'><span class="k">type</span> <span class="n">ExecutionConsumer</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Executed</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{})</span>                                <span class="c1">// 事务成功执行完成后调用</span>
+</span><span class='line'>  <span class="n">Committed</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">target</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">BlockchainInfo</span><span class="p">)</span>    <span class="c1">// 事务成功commit之后调用</span>
+</span><span class='line'>  <span class="n">RolledBack</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{})</span>                              <span class="c1">// 事务成功回滚之后调用</span>
+</span><span class='line'>  <span class="n">StateUpdated</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">target</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">BlockchainInfo</span><span class="p">)</span> <span class="c1">// 状态转换完成之后调用,如果参数为nil，说明转换失败，并要提供新的target</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>该接口中用到了pb.BlockchainInfo，pb.BlockchainInfo是通过protobuf定义生成，表示区块的信息，其详细定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="c1">// 区块链账本的信息：高度、当前区块的hash、前一个区块的hash</span>
+</span><span class='line'><span class="k">type</span> <span class="n">BlockchainInfo</span> <span class="k">struct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Height</span>            <span class="nb">uint64</span> <span class="s">`protobuf:&quot;varint,1,opt,name=height&quot; json:&quot;height,omitempty&quot;`</span>
+</span><span class='line'>  <span class="n">CurrentBlockHash</span>  <span class="p">[]</span><span class="nb">byte</span> <span class="s">`protobuf:&quot;bytes,2,opt,name=currentBlockHash,proto3&quot; json:&quot;currentBlockHash,omitempty&quot;`</span>
+</span><span class='line'>  <span class="n">PreviousBlockHash</span> <span class="p">[]</span><span class="nb">byte</span> <span class="s">`protobuf:&quot;bytes,3,opt,name=previousBlockHash,proto3&quot; json:&quot;previousBlockHash,omitempty&quot;`</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>2 Consenter接口</h2>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Consenter</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">RecvMsg</span><span class="p">(</span><span class="n">msg</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">senderHandle</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'>  <span class="n">ExecutionConsumer</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Consenter接口用于从网络上接上消息，每个共识plugin必须实现该接口。当其它节点通过gRPC发送消息时，当前节点对接受到的消息依次调用RecvMsg方法进行处理，该方法需要提供两个参数：消息内容和发送节点的信息，对应的结构类分别为pb.Message和pb.PeerID，其详细定义见如下代码和注释：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="c1">// 消息结构类</span>
+</span><span class='line'><span class="k">type</span> <span class="n">Message</span> <span class="k">struct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 消息类型</span>
+</span><span class='line'>  <span class="n">Type</span>      <span class="n">Message_Type</span>               <span class="s">`protobuf:&quot;varint,1,opt,name=type,enum=protos.Message_Type&quot; json:&quot;type,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 时间</span>
+</span><span class='line'>  <span class="n">Timestamp</span> <span class="p">*</span><span class="n">google_protobuf</span><span class="p">.</span><span class="n">Timestamp</span> <span class="s">`protobuf:&quot;bytes,2,opt,name=timestamp&quot; json:&quot;timestamp,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 消息内容</span>
+</span><span class='line'>  <span class="n">Payload</span>   <span class="p">[]</span><span class="nb">byte</span>                     <span class="s">`protobuf:&quot;bytes,3,opt,name=payload,proto3&quot; json:&quot;payload,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 消息签名</span>
+</span><span class='line'>  <span class="n">Signature</span> <span class="p">[]</span><span class="nb">byte</span>                     <span class="s">`protobuf:&quot;bytes,4,opt,name=signature,proto3&quot; json:&quot;signature,omitempty&quot;`</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// 发送者节点信息</span>
+</span><span class='line'><span class="k">type</span> <span class="n">PeerID</span> <span class="k">struct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 发送者名称</span>
+</span><span class='line'>  <span class="n">Name</span> <span class="nb">string</span> <span class="s">`protobuf:&quot;bytes,1,opt,name=name&quot; json:&quot;name,omitempty&quot;`</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Consenter接口还包含了ExecutionConsumer接口的方法，这里就不多介绍了。</p>
+
+<h2>3 Inquirer接口</h2>
+
+<p>Inquirer接口主要是获取网络节点信息，详细定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Inquirer</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 获取节点信息</span>
+</span><span class='line'>  <span class="n">GetNetworkInfo</span><span class="p">()</span> <span class="p">(</span><span class="n">self</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerEndpoint</span><span class="p">,</span> <span class="n">network</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerEndpoint</span><span class="p">,</span> <span class="n">err</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 获取节点ID</span>
+</span><span class='line'>  <span class="n">GetNetworkHandles</span><span class="p">()</span> <span class="p">(</span><span class="n">self</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">,</span> <span class="n">network</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">,</span> <span class="n">err</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>pg.PeerEndpoint存储了节点的信息，其定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">PeerEndpoint</span> <span class="k">struct</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 节点ID</span>
+</span><span class='line'>  <span class="n">ID</span>      <span class="p">*</span><span class="n">PeerID</span>           <span class="s">`protobuf:&quot;bytes,1,opt,name=ID&quot; json:&quot;ID,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 节点地址 ip:port</span>
+</span><span class='line'>  <span class="n">Address</span> <span class="nb">string</span>            <span class="s">`protobuf:&quot;bytes,2,opt,name=address&quot; json:&quot;address,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 节点类型</span>
+</span><span class='line'>  <span class="n">Type</span>    <span class="n">PeerEndpoint_Type</span> <span class="s">`protobuf:&quot;varint,3,opt,name=type,enum=protos.PeerEndpoint_Type&quot; json:&quot;type,omitempty&quot;`</span>
+</span><span class='line'>  <span class="c1">// 公钥ID</span>
+</span><span class='line'>  <span class="n">PkiID</span>   <span class="p">[]</span><span class="nb">byte</span>            <span class="s">`protobuf:&quot;bytes,4,opt,name=pkiID,proto3&quot; json:&quot;pkiID,omitempty&quot;`</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>4 Communicator接口</h2>
+
+<p>Communicator接口提供了向节点广播和单播消息的方法，具体定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Communicator</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 向网络中的其它节点广播消息</span>
+</span><span class='line'>  <span class="n">Broadcast</span><span class="p">(</span><span class="n">msg</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">peerType</span> <span class="n">pb</span><span class="p">.</span><span class="n">PeerEndpoint_Type</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'>  <span class="c1">// 向指定的节点发送消息</span>
+</span><span class='line'>  <span class="n">Unicast</span><span class="p">(</span><span class="n">msg</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">Message</span><span class="p">,</span> <span class="n">receiverHandle</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>5 NetworkStack接口</h2>
+
+<p>NetworkStack接口的方法来自于Communicator接口和Inquirer接口，主要是发送消息和获取消息的一个封装。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">NetworkStack</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Communicator</span>
+</span><span class='line'>  <span class="n">Inquirer</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>6 SecurityUtils接口</h2>
+
+<p>SecurityUtils接口用于对消息进行签名和验证。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">SecurityUtils</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">Sign</span><span class="p">(</span><span class="n">msg</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">Verify</span><span class="p">(</span><span class="n">peerID</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">,</span> <span class="n">signature</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">message</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>7 ReadOnlyLedger接口</h2>
+
+<p>ReadOnlyLedger接口用于访问区块链的信息，只能进行读取不能进行写操作，详细定义如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">ReadOnlyLedger</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 根据ID获取一个区块</span>
+</span><span class='line'>  <span class="n">GetBlock</span><span class="p">(</span><span class="n">id</span> <span class="nb">uint64</span><span class="p">)</span> <span class="p">(</span><span class="n">block</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">Block</span><span class="p">,</span> <span class="n">err</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 获取区块的大小</span>
+</span><span class='line'>  <span class="n">GetBlockchainSize</span><span class="p">()</span> <span class="nb">uint64</span>
+</span><span class='line'>  <span class="c1">// 获取区块的高度和hash等信息</span>
+</span><span class='line'>  <span class="n">GetBlockchainInfo</span><span class="p">()</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">BlockchainInfo</span>
+</span><span class='line'>  <span class="c1">// 获取区块的数据</span>
+</span><span class='line'>  <span class="n">GetBlockchainInfoBlob</span><span class="p">()</span> <span class="p">[]</span><span class="nb">byte</span>
+</span><span class='line'>  <span class="c1">// 获取区块的haader的meta信息</span>
+</span><span class='line'>  <span class="n">GetBlockHeadMetadata</span><span class="p">()</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>pb.Block表示一个区块，包括版本、hash值、transaction等，具体这里就不多介绍了。</p>
+
+<h2>8 LegacyExecutor接口</h2>
+
+<p>LegacyExecutor接口用于执行事务相关的保重，会修改账本的内容，提供的方法如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">LegacyExecutor</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 开启一个事务，并提供事务id</span>
+</span><span class='line'>  <span class="n">BeginTxBatch</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{})</span> <span class="n">error</span>
+</span><span class='line'>  <span class="c1">// 执行事务id</span>
+</span><span class='line'>  <span class="n">ExecTxs</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">txs</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">Transaction</span><span class="p">)</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 提交事务id</span>
+</span><span class='line'>  <span class="n">CommitTxBatch</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">metadata</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="p">(*</span><span class="n">pb</span><span class="p">.</span><span class="n">Block</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 回滚事务id</span>
+</span><span class='line'>  <span class="n">RollbackTxBatch</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{})</span> <span class="n">error</span>
+</span><span class='line'>  <span class="c1">// 事务提交前的预览</span>
+</span><span class='line'>  <span class="n">PreviewCommitTxBatch</span><span class="p">(</span><span class="n">id</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">metadata</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>9 Executor接口</h2>
+
+<p>Executor接口最终会替换掉老的事务执行接口，也就是LegacyExecutor接口。调用LegacyExecutor接口进行事务操作时，为了避免资源竞争和损坏账本，必须与状态转移进行协调。（个人理解就是需要锁来进行协调）</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Executor</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 获取所需要的资源</span>
+</span><span class='line'>  <span class="n">Start</span><span class="p">()</span>
+</span><span class='line'>  <span class="c1">// 释放所占有的资源                            </span>
+</span><span class='line'>  <span class="n">Halt</span><span class="p">()</span>
+</span><span class='line'>  <span class="c1">// 执行一系列的事务                           </span>
+</span><span class='line'>  <span class="n">Execute</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">txs</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">Transaction</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 事务执行完成之后进行提交</span>
+</span><span class='line'>  <span class="n">Commit</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">metadata</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 事务的回滚操作</span>
+</span><span class='line'>  <span class="n">Rollback</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{})</span>
+</span><span class='line'>  <span class="c1">// 更新状态</span>
+</span><span class='line'>  <span class="n">UpdateState</span><span class="p">(</span><span class="n">tag</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">target</span> <span class="p">*</span><span class="n">pb</span><span class="p">.</span><span class="n">BlockchainInfo</span><span class="p">,</span> <span class="n">peers</span> <span class="p">[]*</span><span class="n">pb</span><span class="p">.</span><span class="n">PeerID</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>10 LedgerManager接口</h2>
+
+<p>LedgerManager接口用于管理账本的状态。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">LedgerManager</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 使账本为无效状态，在该状态应该拒绝查询</span>
+</span><span class='line'>  <span class="n">InvalidateState</span><span class="p">()</span>
+</span><span class='line'>  <span class="c1">// 使用账本为有效状态，当前状态下应该恢复为可提供查询操作</span>
+</span><span class='line'>  <span class="n">ValidateState</span><span class="p">()</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>11 StatePersistor接口</h2>
+
+<p>StatePersistor接口用于保存共识状态，防止进程崩溃丢失状态。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">StatePersistor</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// 存储状态</span>
+</span><span class='line'>  <span class="n">StoreState</span><span class="p">(</span><span class="n">key</span> <span class="nb">string</span><span class="p">,</span> <span class="n">value</span> <span class="p">[]</span><span class="nb">byte</span><span class="p">)</span> <span class="n">error</span>
+</span><span class='line'>  <span class="c1">// 读取状态</span>
+</span><span class='line'>  <span class="n">ReadState</span><span class="p">(</span><span class="n">key</span> <span class="nb">string</span><span class="p">)</span> <span class="p">([]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 按前缀读取状态信息</span>
+</span><span class='line'>  <span class="n">ReadStateSet</span><span class="p">(</span><span class="n">prefix</span> <span class="nb">string</span><span class="p">)</span> <span class="p">(</span><span class="k">map</span><span class="p">[</span><span class="nb">string</span><span class="p">][]</span><span class="nb">byte</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">// 删除状态</span>
+</span><span class='line'>  <span class="n">DelState</span><span class="p">(</span><span class="n">key</span> <span class="nb">string</span><span class="p">)</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>12 Stack接口</h2>
+
+<p>Stack接口仅仅是对共识plugin需要实现的接口进行了一层封装，具体如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="k">type</span> <span class="n">Stack</span> <span class="k">interface</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">NetworkStack</span>
+</span><span class='line'>  <span class="n">SecurityUtils</span>
+</span><span class='line'>  <span class="n">Executor</span>
+</span><span class='line'>  <span class="n">LegacyExecutor</span>
+</span><span class='line'>  <span class="n">LedgerManager</span>
+</span><span class='line'>  <span class="n">ReadOnlyLedger</span>
+</span><span class='line'>  <span class="n">StatePersistor</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>以上是对consensus的接口的介绍，目前fabric提供了两种共识算法的实现，分别是noops和pbft，noops主要是针对单节点的实现，主要用于测试；而pbft是一种拜占庭容错算法，用于多节点的共识机制。</p>
+
+<p>fabric多节点的共识机制使用的是pbft。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -2717,394 +3119,6 @@ Api.Client.test -> Api.Client.send_test ->  TServiceClient.sendBase -> TBase.wri
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/10/21/writing-an-ice-application-with-java/">用Java实现一个ICE应用</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-10-21T23:30:00+08:00" pubdate data-updated="true">2013年10月21日</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>注意:本文翻译自ice官方文档</p>
-
-<p>本文实现了一个简单的（但是完整的）客户端和服务器。</p>
-
-<p>实现一个ICE应用程序包括以下几个步骤：</p>
-
-<ol>
-<li>完成slice定义并编译。</li>
-<li>实现一个服务器并编译。</li>
-<li>实现一个客户端并编译。</li>
-</ol>
-
-
-<p>如果已经实现了服务器，那么只需要写一个客户端，并且不需要写slice定义，只进行编译就行（很明显，在此情况下也不用实现服务器）。</p>
-
-<p>本文描述的应用可以将客户端发送的文本在远程的服务器进行有序打印。为简单起见，我们的打印机会将文本简单地打印到终端，而不是真正的通过打印机打印。这样的目的只是为了显示客户端如何与服务器进行通信。一旦控制线程执行到了服务器应用程序的代码，就可以做任何它喜欢的事（包括将文本发送到真正的打印机上）。如何做到这一点是ICE提供的功能，本文并不涉及。</p>
-
-<h4>Slice定义</h4>
-
-<p>编写ICE应用程序的第一步写一个slice文件，其中包含了应用程序使用的接口。对于我们这个小小的打印程序，我们编写以下Slice定义：</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>module Demo{
-</span><span class='line'>      interface Printer{
-</span><span class='line'>          void printString(string s);
-</span><span class='line'>      }
-</span><span class='line'>  }</span></code></pre></td></tr></table></div></figure>
-
-
-<p>我们将这个文本文件保存为Printer.ice.</p>
-
-<p>Slice定义中，包含模块Demo,该模块仅仅包含一个称为Printer的接口。对于这个应用程序，接口只提供了一个单一的操作printString.该操作接受一个字符串作为其唯一的输入参数。字符串的文本内容是什么（可能在远程），打印机就打印什么。</p>
-
-<h4>编译Slice文件</h4>
-
-<p>创建Java应用程序的第一步是编译通过Slice定义的数据结构，以生成Java代理和框架。在Unix下，可以通过以下方式进行编译：</p>
-
-<pre><code>$ mkdir generated
-$ slice2java --output-dir generated Printer.ice
-</code></pre>
-
-<p>选项&#8211;output-dir将编译生成的文件输出到指定的目录下。这就避免了工作目录因生成大量的文件而造成混乱的现象。编译命令slice2java将slice定义的文件生成一些Java源文件。我们现在不用关心这些文件中的内容——它们包含了打印接口的代码，而这些接口我们定义在Printer.ice文件中。</p>
-
-<h4>用Java编写并编译服务器</h4>
-
-<p>为了实现我们的打印机接口，必须要创建一个servant类。按照惯例，servant类使用其接口名加一个后缀I。因此，我们的servant类称为PrinterI,并且源文件命名为PrinterI.java:</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">PrinterI</span> <span class="kd">extends</span> <span class="n">Demo</span><span class="o">.</span><span class="na">_PrinterDisp</span><span class="o">{</span>
-</span><span class='line'>      <span class="kd">public</span> <span class="kt">void</span> <span class="nf">printString</span><span class="o">(</span><span class="n">String</span> <span class="n">s</span><span class="o">,</span><span class="n">Ice</span><span class="o">.</span><span class="na">Current</span> <span class="n">current</span><span class="o">){</span>
-</span><span class='line'>          <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">s</span><span class="o">);</span>
-</span><span class='line'>      <span class="o">}</span>
-</span><span class='line'>  <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>类PrinterI继承自一个称为_PrinterDisp的基类，该基类由slice2java编译器生成的，是一个抽象类，并且包含一个printString方法。该方法接受一个需要打印的字符串和一个类型为Ice.Current的对象（现在我们将忽略参数Ice.Current）.我们实现的printString方法，只是将字符串打印到终端。</p>
-
-<p>服务器的其它代码在源文件Server.java中，其完整的代码如下：</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Server</span><span class="o">{</span>
-</span><span class='line'>      <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span> <span class="o">[]</span><span class="n">args</span><span class="o">){</span>
-</span><span class='line'>          <span class="kt">int</span> <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-</span><span class='line'>          <span class="n">Ice</span><span class="o">.</span><span class="na">Communicator</span> <span class="n">ic</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
-</span><span class='line'>          <span class="k">try</span><span class="o">{</span>
-</span><span class='line'>              <span class="n">ic</span> <span class="o">=</span> <span class="n">Ice</span><span class="o">.</span><span class="na">Util</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
-</span><span class='line'>              <span class="n">Ice</span><span class="o">.</span><span class="na">ObjectAdapter</span> <span class="n">adapter</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="na">createObjectAdapterWithEndpoints</span><span class="o">(</span><span class="s">&quot;SimplePrinterAdapter&quot;</span><span class="o">,</span><span class="s">&quot;defalut -p 10000&quot;</span><span class="o">);</span>
-</span><span class='line'>              <span class="n">Ice</span><span class="o">.</span><span class="na">Object</span> <span class="n">object</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PrinterI</span><span class="o">();</span>
-</span><span class='line'>              <span class="n">adapter</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">object</span><span class="o">,</span><span class="n">ic</span><span class="o">.</span><span class="na">stringToIdentity</span><span class="o">(</span><span class="s">&quot;SimplePrinterAdapter&quot;</span><span class="o">));</span>
-</span><span class='line'>              <span class="n">adapter</span><span class="o">.</span><span class="na">activate</span><span class="o">();</span>
-</span><span class='line'>              <span class="n">ic</span><span class="o">.</span><span class="na">waitForShutdown</span><span class="o">();</span>
-</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Ice</span><span class="o">.</span><span class="na">LocalException</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>              <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-</span><span class='line'>              <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-</span><span class='line'>              <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>          <span class="o">}</span>
-</span><span class='line'>          <span class="k">if</span><span class="o">(</span><span class="n">ic</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
-</span><span class='line'>              <span class="k">try</span><span class="o">{</span>
-</span><span class='line'>                  <span class="n">ic</span><span class="o">.</span><span class="na">destory</span><span class="o">();</span>
-</span><span class='line'>              <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>                  <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-</span><span class='line'>                  <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>              <span class="o">}</span>
-</span><span class='line'>          <span class="o">}</span>
-</span><span class='line'>          <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="n">status</span><span class="o">);</span>
-</span><span class='line'>      <span class="o">}</span>
-</span><span class='line'>  <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>请注意，代码的结构通常如下：</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Server</span><span class="o">{</span>
-</span><span class='line'>      <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span> <span class="o">[]</span><span class="n">args</span><span class="o">){</span>
-</span><span class='line'>          <span class="kt">int</span> <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-</span><span class='line'>          <span class="n">Ice</span><span class="o">.</span><span class="na">Communicator</span> <span class="n">ic</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
-</span><span class='line'>          <span class="k">try</span><span class="o">{</span>
-</span><span class='line'>          
-</span><span class='line'>              <span class="c1">//在这里实现服务器</span>
-</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Ice</span><span class="o">.</span><span class="na">LocalException</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>              <span class="n">e</span><span class="o">.</span><span class="na">printStakcTrace</span><span class="o">();</span>
-</span><span class='line'>              <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-</span><span class='line'>              <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>          <span class="o">}</span>
-</span><span class='line'>          <span class="k">if</span><span class="o">(</span> <span class="n">ic</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
-</span><span class='line'>              <span class="c1">//清除</span>
-</span><span class='line'>              <span class="c1">//</span>
-</span><span class='line'>              <span class="k">try</span><span class="o">{</span>
-</span><span class='line'>                  <span class="n">ic</span><span class="o">.</span><span class="na">destory</span><span class="o">();</span>
-</span><span class='line'>              <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>                  <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">printlne</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-</span><span class='line'>                  <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>              <span class="o">}</span>
-</span><span class='line'>          <span class="o">}</span>
-</span><span class='line'>          <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="n">status</span><span class="o">);</span>
-</span><span class='line'>      <span class="o">}</span>
-</span><span class='line'>  <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>在main函数的主体部分中，包含了一个捕获异常的try语句，并且在try语句中包含了所有服务器代码，随后有两个catch语句。其中第一个catch捕获所有ICE运行环境可能抛出的异常。该部分代码的目的是不管代码在任何地方遇到了意想不到的ICE运行时异常，退出当前的堆栈回到主函数中。第二个捕获异常的catch语句的目的是当代码某个地方遇到一个致命的错误时，可以简单地抛出一个异常，并携带一个错误信息。同样的，代码退出当前的堆栈回到主函数当中，并打印错误信息，然后向操作系统返回失败的结果。</p>
-
-<p>在代码退出之前，如果通信器(communicator)创建成功，则需要销毁它。这样做的目的是为了正确的终止ICE运行时环境：程序必须调用communicator对象的destory，否则会产生未知的结果。</p>
-
-<p>try代码块中包含的服务器代码如下：</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="n">ic</span> <span class="o">=</span> <span class="n">Ice</span><span class="o">.</span><span class="na">Util</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">Ice</span><span class="o">.</span><span class="na">ObjectAdapter</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="na">createObjectAdapterWithEndpoints</span><span class="o">(</span><span class="s">&quot;SimplePrinterAdapter&quot;</span><span class="o">,</span><span class="s">&quot;defalut -p 10000&quot;</span><span class="o">);</span>
-</span><span class='line'>  <span class="n">Ice</span><span class="o">.</span><span class="na">Object</span> <span class="n">object</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PrinterI</span><span class="o">();</span>
-</span><span class='line'>  <span class="n">adapter</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">object</span><span class="o">,</span><span class="n">ic</span><span class="o">.</span><span class="na">stringToIdentity</span><span class="o">(</span><span class="s">&quot;SimplePrinterAdapter&quot;</span><span class="o">));</span>
-</span><span class='line'>  <span class="n">adpater</span><span class="o">.</span><span class="na">activate</span><span class="o">();</span>
-</span><span class='line'>  <span class="n">ic</span><span class="o">.</span><span class="na">waitForShutdown</span><span class="o">();</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>服务器代码包含了以下几个步骤：</p>
-
-<ol>
-<li>我们通过Ice.Util.initialize方法初始化ICE运行时环境（由于服务器可能以命令行的方法运行，因此，在调用该方法时传递了参数args，在本例中，服务器不需要命令行参数）。初始化方法返回一个类Ice.Communicator对象的引用，这是ICE运行时环境主要的对象。</li>
-<li>通过Communicator对象实例的createObjectAdapterWithEndpoints方法创建一个适配器对象，我们传递了两个字符串参数，第一个参数为SimplePrinterAdpater(适配器的名称)，另外一个参数是字符串default -p 10000,指示了适配器使用默认的协议（TCP/IP）监端口号10000的网络请求。</li>
-<li>此时，服务端运行环境初始化完成，然后实例化一个PrinterI对象为我们的打印机接口创建一个服务。</li>
-<li>通过调用适配器对象的add方法添加servant到运行时环境中，add方法的第一个参数为我们实例化的servant对象，另外一个参数是一个标识符，表示servat的名称，在这个例子中，即字符串&#8221;SimplePrinterAdapter&#8221;（如果有我们有多个打印机，每个将有一个不同的名字，或者更确切地说，拥有不同的对象标识）。</li>
-<li>接下来，通过调用adapter对象的activate方法激活适配器（适配器最初处于未激活状态，假设有多个servant，并且共享同一个适配器，如果我想要甩的servant未被实例化之后才处理请求，那么适配器最初为未激活是非常有用的）。</li>
-<li>最后，调用waitForShutdown挂用调用的线程，直到服务因调用一个方法终止运行时环境或者接收到一个终止。（在本例子中，当我们不再需要它时，可以通过命令行简单地中断服务器。）</li>
-</ol>
-
-
-<p>需要注意的是，虽然本例中的代码非常少，但这些代码对所有的服务器都适用的。为了方便，可以将这些代码放在一个辅助类中，此后，就不必再修改它（ICE提供了这样的辅助类Ice.Application）。对于本例的应用程序代码，实际上只包住了几行：定义PrinterI类用了7行代码，而实例化PrinterI对象并将其注册到适配器中只用了三行代码。</p>
-
-<p>我们通过以下方式编译服务器代码：</p>
-
-<pre><code>$ mkdir classes
-$ javac -d classes -classpath classes:$ICE_HOME/lib/Ice.jar \
-  Server.java PrinterI.java generated/Demo/*.java
-</code></pre>
-
-<p>通过以上方式将应用程序代码和IE编译器生成的代码都进行了编译，其中环境变量ICE_HOME为包含ICE运行时环境的根目录（例如，如果将ICE安装在/opt/ice目录下，则ICE_HOME的值应该设置为/opt/ice）。值得注意的是，对于JAVA的ICE环境中，使用了ant环境对源代码进行控制（ant类似于make，但是对java应用来说比较灵活），你可以看看ant的示例程序，以掌握如何使用该工具。</p>
-
-<h4>编写并编译Java客户端</h4>
-
-<p>客户端代码包含在Client.java源文件中，跟服务器代码非常相似，完整的代码如下：</p>
-
-<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-</pre></td><td class='code'><pre><code class='java'><span class='line'> <span class="kd">public</span> <span class="kd">class</span> <span class="nc">Client</span><span class="o">{</span>
-</span><span class='line'>      <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span> <span class="o">[]</span><span class="n">args</span><span class="o">){</span>
-</span><span class='line'>          <span class="kt">int</span> <span class="n">status</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-</span><span class='line'>          <span class="n">Ice</span><span class="o">.</span><span class="na">Communicator</span> <span class="n">ic</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
-</span><span class='line'>          <span class="k">try</span><span class="o">{</span>
-</span><span class='line'>              <span class="n">ic</span> <span class="o">=</span> <span class="n">Ice</span><span class="o">.</span><span class="na">Util</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">args</span><span class="o">);</span>
-</span><span class='line'>              <span class="n">Ice</span><span class="o">.</span><span class="na">ObjectPrx</span> <span class="n">base</span> <span class="o">=</span> <span class="n">ic</span><span class="o">.</span><span class="na">stringToProxy</span><span class="o">(</span><span class="s">&quot;SimplePrinterAdapter:default -p 10000&quot;</span><span class="o">);</span>
-</span><span class='line'>              <span class="n">Demo</span><span class="o">.</span><span class="na">PrinterPrx</span> <span class="n">printer</span> <span class="o">=</span> <span class="n">Demo</span><span class="o">.</span><span class="na">PrinterPrxHelper</span><span class="o">.</span><span class="na">checkedCast</span><span class="o">(</span><span class="n">base</span><span class="o">);</span>
-</span><span class='line'>              <span class="k">if</span><span class="o">(</span><span class="n">printer</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
-</span><span class='line'>                  <span class="k">throw</span> <span class="k">new</span> <span class="nf">Error</span><span class="o">(</span><span class="s">&quot;Invalid proxy&quot;</span><span class="o">);</span>
-</span><span class='line'>              <span class="o">}</span>
-</span><span class='line'>          <span class="o">}</span><span class="k">catch</span> <span class="o">(</span><span class="n">Ice</span><span class="o">.</span><span class="na">LocalException</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>              <span class="n">e</span><span class="o">.</span><span class="na">printStackTrace</span><span class="o">();</span>
-</span><span class='line'>              <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>          <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>              <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-</span><span class='line'>              <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>          <span class="o">}</span>
-</span><span class='line'>          <span class="k">if</span><span class="o">(</span><span class="n">ic</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">){</span>
-</span><span class='line'>              <span class="c1">// 清除</span>
-</span><span class='line'>              <span class="c1">//</span>
-</span><span class='line'>              <span class="k">try</span><span class="o">{</span>
-</span><span class='line'>                  <span class="n">ic</span><span class="o">.</span><span class="na">destory</span><span class="o">();</span>
-</span><span class='line'>              <span class="o">}</span><span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">){</span>
-</span><span class='line'>                  <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getMessage</span><span class="o">());</span>
-</span><span class='line'>                  <span class="n">status</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
-</span><span class='line'>              <span class="o">}</span>
-</span><span class='line'>          <span class="o">}</span>
-</span><span class='line'>          <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="n">status</span><span class="o">);</span>
-</span><span class='line'>      <span class="o">}</span>
-</span><span class='line'>  <span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p><strong>注意</strong>：客户端的代码布局总体上跟服务器的布局是一样的，使用一个try catch块来处理错误，在try代码块中执行以下的操作：</p>
-
-<ol>
-<li>跟服务器一样，客户端通过调用Ice.Util.initialize方法初始化ICE运行时环境。</li>
-<li>下一步的操作是取得远程打印的代理，通过调用通信器对象上的stringToProxy方法创建这个代理对象，并传字符串参数&#8221;SimplePrinterAdapter:default - 10000&#8221;。请注意该字符串中包含了对象的标识和服务器所使用的端口（显然，在将对象标识和端口硬编码到应用是不是一个好的主意，但在我们的应用中是可以工作的，当我们讨论IceGrid时，会遇到更加合理的方式）。</li>
-<li>方法stringToProxy返回的代码对象的类型是Ice.ObjectProxy,它处在接口和类的父类。但实际上我们只与打印机交互，需要一个打印机接口的代理，而不是一个Object接口的代理。为了做到这一点，我们通过调用PrinterPrxHelper。checkedCast方法向下转型。该方法会向服务器发送检查和转型相关的请求，相当是向服务器询问“这是一个打印机接口的代理吗？”如果是的话，将返回一个Demo.Printer对象的代理，否则，如果是一些其它类型的接口，返回null。</li>
-<li>接下来，需要测试下类型向下转型是否成功，如果没有，则抛出一个异常，终止客户端。</li>
-<li>现在在我们的地址空间有一个可用的代理对象，并且可以调用printString方法，传递一个具有悠久历史的&#8221;Hello World!&#8221;字符串作为参数，服务器将会在终端在打印该字符串。</li>
-</ol>
-
-
-<p>然后像编译服务器代码一样编译客户端代码：</p>
-
-<pre><code>$ javas -d classes -classpath classes::$ICE_HOME/lib/Ice.jar \
-  Client.java PrinterI.java generated/Demo/*.java
-</code></pre>
-
-<h4>运行客户端和服务器</h4>
-
-<p>为了运行客户端和服务器，我们首先在一个窗口中运行服务器：</p>
-
-<pre><code>$ java Server
-</code></pre>
-
-<p>目前，在服务端我们将看不任何东西，因为服务器只是简单地等待客户端连接它。我们在另外一个窗口中运行客户端：</p>
-
-<pre><code>$ java Client
-$
-</code></pre>
-
-<p>客户端运行并退出后，并不会输出任何东西。但是，在服务器的窗口中，我们看到打印了字符串“Hello World！”。如果要终止服务器，可以通过命令行中断程序。（在讨论Ice.Application中，我们将看到更简洁的方式来终止服务器。）</p>
-
-<p>如果出现任何未知的错误，客户端将打印错误信息。例如，如果在运行客户端之前未启动服务哭喊，我们将得到类似下面的错误信息：</p>
-
-<pre><code>Ice.ConnectionRefusedException
-   error = 0
-    at IceInternal.ConnectRequestHandler.getConnection(ConnectRequestHandler.java:240)
-    at IceInternal.ConnectRequestHandler.sendRequest(ConnectRequestHandler.java:138)
-    at IceInternal.Outgoing.invoke(Outgoing.java:66)
-    at Ice._ObjectDelM.ice_isA(_ObjectDelM.java:30)
-    at Ice.ObjectPrxHelperBase.ice_isA(ObjectPrxHelperBase.java:111)
-    at Ice.ObjectPrxHelperBase.ice_isA(ObjectPrxHelperBase.java:77)
-    at Demo.HelloPrxHelper.checkedCast(HelloPrxHelper.java:228)
-    at Client.run(Client.java:65)
-    Caused by: java.net.ConnectException: Connection refused
-     ...
-</code></pre>
-
-<p>需要注意的是，服务器和客户端要运行成功，CLASSPATH路径中必须包含ICE类库和类的目录，例如：</p>
-
-<pre><code>$ export CLASSPATH=$CLASSPATH:./classes:$ICE_HOME/lib/Ice.jar
-</code></pre>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -3125,6 +3139,7 @@ $
   <li><a href='/blog/categories/Python/'>Python (1)</a></li>
   <li><a href='/blog/categories/others/'>其它 (3)</a></li>
   <li><a href='/blog/categories/distributed/'>分布式 (9)</a></li>
+  <li><a href='/blog/categories/blockchain/'>区块链 (1)</a></li>
   <li><a href='/blog/categories/db/'>存储 (1)</a></li>
   <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
   <li><a href='/blog/categories/arch/'>架构 (2)</a></li>
@@ -3134,6 +3149,10 @@ $
 <section>
   <h1>最近博文</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/10/13/fabric-consensus-analysis-1/">fabric共识机制分析1</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/01/06/thrift-network-package-introduce/">Thrift网络请求包格式详解</a>
@@ -3149,10 +3168,6 @@ $
     
       <li class="post">
         <a href="/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/">Cassandra架构与源码分析(一)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/03/18/merkle-tree/">Merkle Tree</a>
       </li>
     
   </ul>

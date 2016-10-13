@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: 架构 | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/arch/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2016-06-07T10:32:16+08:00</updated>
+  <updated>2016-10-13T18:56:44+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -280,7 +280,7 @@ public void writeString(String str) throws TException {</p>
 
 <p>下面我们以上面idl文件中test方法的参数作为例子，给出具体的协议格式，如下图：</p>
 
-<p>{% img  center /images/2016-06/thrift-protocol-format.png %}</p>
+<p><img class="center" src="/images/2016-06/thrift-protocol-format.png"></p>
 
 <h2>开篇中的问题</h2>
 
@@ -319,7 +319,7 @@ public void writeString(String str) throws TException {</p>
 
 <h3>发红包过程</h3>
 
-<p>{% img  center /images/wei-xin-hong-bao-yuan-li/fa-hong-bao.png %}</p>
+<p><img class="center" src="/images/wei-xin-hong-bao-yuan-li/fa-hong-bao.png"></p>
 
 <p>微信发红包的过程如上图所示，详细过程如下：</p>
 
@@ -339,7 +339,7 @@ public void writeString(String str) throws TException {</p>
 
 <h3>点击进入红包过程</h3>
 
-<p>{% img  center /images/wei-xin-hong-bao-yuan-li/dian-ji-jin-ru-hong-bao.png %}</p>
+<p><img class="center" src="/images/wei-xin-hong-bao-yuan-li/dian-ji-jin-ru-hong-bao.png"></p>
 
 <p>用户点击进入红包的处理过程如上图所示，详细过程如下：</p>
 
@@ -361,7 +361,7 @@ public void writeString(String str) throws TException {</p>
 
 <h3>拆红包过程</h3>
 
-<p>{% img  center /images/wei-xin-hong-bao-yuan-li/cai-hong-bao.png %}</p>
+<p><img class="center" src="/images/wei-xin-hong-bao-yuan-li/cai-hong-bao.png"></p>
 
 <p>用户拆红包的过程图如上图所示，详细过程如下：</p>
 

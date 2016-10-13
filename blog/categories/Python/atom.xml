@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: Python | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/Python/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2016-06-07T10:32:16+08:00</updated>
+  <updated>2016-10-13T18:56:44+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -33,45 +33,80 @@
 
 <p>使用urllib.request的最简单的方法如下：</p>
 
-<p>{% codeblock lang:python%}</p>
-
-<pre><code>import urllib.request
-response = url lib.request.urlopen('http://python.org/')
-html = response.read()
-</code></pre>
-
-<p>{% endcodeblock%}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'><span class="n">response</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="s">&#39;http://python.org/&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">html</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>如果想通过URL检索资源，并将结果存储在一个临时位置，可以通过urlretrieve函数到达要求。
-{% codeblock lang:python%}</p>
-
-<pre><code>import urllib.request
-local_filename,headers = url lib.request.urlretrieve('http://python.org/')
-html = open(local_filename)
-</code></pre>
-
-<p>{% endcodeblock%}
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'><span class="n">local_filename</span><span class="p">,</span><span class="n">headers</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s">&#39;http://python.org/&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">html</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_filename</span><span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 urllib的使用就如以上的方法那样简单（注意，除了使用http,我们也可以使用ftp协议，file等等。），然而本教程的目的是介绍更复杂的HTTP协议。</p>
 
 <p>HTTP协议包括请求和响应，客户端发出请求，而服务器响应请求。urllib.request代表了HTTP的请求对象，表示我们创建的服务请求。在最简单的形式中，首先创建一个Request对象，指定需要获取资源的URL，然后调用urlopen返回一个针对请求的响应对象，这处响应对象类似文件对象，也就是说，可以调用read函数获取响应的内容。</p>
 
-<p>{% codeblock lang:python%}</p>
-
-<pre><code>import urllib.request
-req = urllib.request.Request('http://www.voidspace.org.uk')
-response = urllib.request.urllopen(req)
-the_page = response.read()
-</code></pre>
-
-<p>{% endcodeblock%}
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'><span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s">&#39;http://www.voidspace.org.uk&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urllopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'><span class="n">the_page</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 需要注意的是，urllib.request使用相同的请求接口来处理所有的URL方案。例如，可以使用以下的方式使用FTP请求：</p>
 
-<p>{% codeblock lang:python%}</p>
-
-<pre><code>req = urllib.request.Request('ftp://example.com/')
-</code></pre>
-
-<p>{% endcodeblock%}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s">&#39;ftp://example.com/&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>在处理HTTP的情况下，请求对象允许你可以做额外的两件事：首先，可以将数据发送给服务器。其次你可以将与数据有关的其它信息（元数据）或者请求自身发送给服务器，这些信息通过设置HTTP头进行传输。让我们依次介绍这些内容。</p>
 
@@ -79,45 +114,81 @@ the_page = response.read()
 
 <p>有时我们想向一个URL指定的地址发送数据（通常URL地址涉及一个CGI(公共网关接口)脚本或者其它的web应用程序）。在HTTP协议中，我们通常使用POST请求来完成这样的任务。当我们提交一个HTML表单时，浏览器通常使用POST请求，并非所有POST请求都来自表单。我们可以使用一个POST向我们的应用程序传输任意的数据。在HTML表单中，数据使用一种标准的方式进行编码，然后以参数的形式传给Request对象，在Python中，使用urllib.parse库来完成数据的编码。</p>
 
-<p>{%codeblock lang:python%}</p>
-
-<pre><code>import urllib.parse
-import urllib.request
-url = 'http://www.someserver.com/cgi-bin/register.cgi'
-values = {'name' : 'Michael Foord',
-           'location' : 'Northampton',
-           'language' : 'Python'}
-
-data = urllib.parse.urlencode(values)
-data = data.encode('utf-8')
-req = urllib.request.Request(url,data)
-response = url lib.request.urlopen(req)
-the_page = response.read()
-</code></pre>
-
-<p>{%endcodeblock%}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">urllib.parse</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'><span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://www.someserver.com/cgi-bin/register.cgi&#39;</span>
+</span><span class='line'><span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;name&#39;</span> <span class="p">:</span> <span class="s">&#39;Michael Foord&#39;</span><span class="p">,</span>
+</span><span class='line'>           <span class="s">&#39;location&#39;</span> <span class="p">:</span> <span class="s">&#39;Northampton&#39;</span><span class="p">,</span>
+</span><span class='line'>           <span class="s">&#39;language&#39;</span> <span class="p">:</span> <span class="s">&#39;Python&#39;</span><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="n">response</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'><span class="n">the_page</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>需要注意的是，有时候需要设置其它的编码方式（如上传文件的HTML表单——更多的介绍参见HTML规范中的表单提交）。</p>
 
 <p>如果不传递参数data，则urllib使用GET请求。GTE请求与POST请求之间存在区别，其中一个区别是POST请求往往存在副作用，它可以以某种方式改变系统的状态。尽管HTTP协议的标准制定者清楚知道POST请求总是会产生副作用，GET请求永远不会引起副作用，没有什么能够使GET请求生产副作用，也没有什么能够使用HOST请求无副作用。数据也可以在HTTP GET请求中，通过URL编码的方式进行传递。通过以下方式实现：</p>
 
-<p>{% codeblock lang:python%}</p>
-
-<pre><code>import urllib.request
-import urllib.parse
-data = {}
-data['name'] = 'Somebody Here'
-data['location'] = 'Northhampton'
-data['language'] = 'Python'
-url_values = urllib.parse.urlencode(data)
-print(url_values)
-
-url = 'http://www.example.com/example.cgi'
-full_url=url + "?" + url_values
-data = urllib.request.urlopen(full_url)
-</code></pre>
-
-<p>{% endcodeblock%}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">urllib.parse</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'><span class="n">data</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Somebody Here&#39;</span>
+</span><span class='line'><span class="n">data</span><span class="p">[</span><span class="s">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Northhampton&#39;</span>
+</span><span class='line'><span class="n">data</span><span class="p">[</span><span class="s">&#39;language&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Python&#39;</span>
+</span><span class='line'><span class="n">url_values</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'><span class="k">print</span><span class="p">(</span><span class="n">url_values</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://www.example.com/example.cgi&#39;</span>
+</span><span class='line'><span class="n">full_url</span><span class="o">=</span><span class="n">url</span> <span class="o">+</span> <span class="s">&quot;?&quot;</span> <span class="o">+</span> <span class="n">url_values</span>
+</span><span class='line'><span class="n">data</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">full_url</span><span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>请注意，通过添加符号?并紧跟着编码好的值在其后的方式来创建完整的URL。</p>
 ]]></content>

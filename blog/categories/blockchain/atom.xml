@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[博客分类: 区块链 | 精神兵的 Blog]]></title>
+  <link href="http://jackliu8722.github.com/blog/categories/blockchain/atom.xml" rel="self"/>
+  <link href="http://jackliu8722.github.com/"/>
+  <updated>2016-10-13T18:56:44+08:00</updated>
+  <id>http://jackliu8722.github.com/</id>
+  <author>
+    <name><![CDATA[jackliu]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[fabric共识机制分析1]]></title>
+    <link href="http://jackliu8722.github.com/blog/2016/10/13/fabric-consensus-analysis-1/"/>
+    <updated>2016-10-13T18:25:00+08:00</updated>
+    <id>http://jackliu8722.github.com/blog/2016/10/13/fabric-consensus-analysis-1</id>
+    <content type="html"><![CDATA[<p>共识机制的实现提供了一系列的接口，下列首先对接口进行一下简单的介绍，详见注释。</p>
+
+<h2>1 ExecutionConsumer接口</h2>
+
+<p>```go
+// ExecutionConsumer接口实现异步回调的功能
+type ExecutionConsumer interface {</p>
+
+<pre><code>Executed(tag interface{})                                // 事务成功执行完成后调用
+Committed(tag interface{}, target *pb.BlockchainInfo)    // 事务成功commit之后调用
+RolledBack(tag interface{})                              // 事务成功回滚之后调用
+StateUpdated(tag interface{}, target *pb.BlockchainInfo) // 状态转换完成之后调用,如果参数为nil，说明转换失败，并要提供新的target
+</code></pre>
+
+<p>}
+```</p>
+
+<p>该接口中用到了pb.BlockchainInfo，pb.BlockchainInfo是通过protobuf定义生成，表示区块的信息，其详细定义如下：</p>
+
+<p>```go
+// 区块链账本的信息：高度、当前区块的hash、前一个区块的hash
+type BlockchainInfo struct {</p>
+
+<pre><code>Height            uint64 `protobuf:"varint,1,opt,name=height" json:"height,omitempty"`
+CurrentBlockHash  []byte `protobuf:"bytes,2,opt,name=currentBlockHash,proto3" json:"currentBlockHash,omitempty"`
+PreviousBlockHash []byte `protobuf:"bytes,3,opt,name=previousBlockHash,proto3" json:"previousBlockHash,omitempty"`
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>2 Consenter接口</h2>
+
+<p>```go
+type Consenter interface {</p>
+
+<pre><code>RecvMsg(msg *pb.Message, senderHandle *pb.PeerID) error
+ExecutionConsumer
+</code></pre>
+
+<p>}
+```
+Consenter接口用于从网络上接上消息，每个共识plugin必须实现该接口。当其它节点通过gRPC发送消息时，当前节点对接受到的消息依次调用RecvMsg方法进行处理，该方法需要提供两个参数：消息内容和发送节点的信息，对应的结构类分别为pb.Message和pb.PeerID，其详细定义见如下代码和注释：</p>
+
+<p>```go
+// 消息结构类
+type Message struct {</p>
+
+<pre><code>// 消息类型
+Type      Message_Type               `protobuf:"varint,1,opt,name=type,enum=protos.Message_Type" json:"type,omitempty"`
+// 时间
+Timestamp *google_protobuf.Timestamp `protobuf:"bytes,2,opt,name=timestamp" json:"timestamp,omitempty"`
+// 消息内容
+Payload   []byte                     `protobuf:"bytes,3,opt,name=payload,proto3" json:"payload,omitempty"`
+// 消息签名
+Signature []byte                     `protobuf:"bytes,4,opt,name=signature,proto3" json:"signature,omitempty"`
+</code></pre>
+
+<p>}</p>
+
+<p>// 发送者节点信息
+type PeerID struct {</p>
+
+<pre><code>// 发送者名称
+Name string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+</code></pre>
+
+<p>}
+```
+Consenter接口还包含了ExecutionConsumer接口的方法，这里就不多介绍了。</p>
+
+<h2>3 Inquirer接口</h2>
+
+<p>Inquirer接口主要是获取网络节点信息，详细定义如下：</p>
+
+<p>```go
+type Inquirer interface {</p>
+
+<pre><code>// 获取节点信息
+GetNetworkInfo() (self *pb.PeerEndpoint, network []*pb.PeerEndpoint, err error)
+// 获取节点ID
+GetNetworkHandles() (self *pb.PeerID, network []*pb.PeerID, err error)
+</code></pre>
+
+<p>}
+```
+pg.PeerEndpoint存储了节点的信息，其定义如下：</p>
+
+<p>```go
+type PeerEndpoint struct {</p>
+
+<pre><code>// 节点ID
+ID      *PeerID           `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
+// 节点地址 ip:port
+Address string            `protobuf:"bytes,2,opt,name=address" json:"address,omitempty"`
+// 节点类型
+Type    PeerEndpoint_Type `protobuf:"varint,3,opt,name=type,enum=protos.PeerEndpoint_Type" json:"type,omitempty"`
+// 公钥ID
+PkiID   []byte            `protobuf:"bytes,4,opt,name=pkiID,proto3" json:"pkiID,omitempty"`
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>4 Communicator接口</h2>
+
+<p>Communicator接口提供了向节点广播和单播消息的方法，具体定义如下：</p>
+
+<p>```go
+type Communicator interface {</p>
+
+<pre><code>// 向网络中的其它节点广播消息
+Broadcast(msg *pb.Message, peerType pb.PeerEndpoint_Type) error
+// 向指定的节点发送消息
+Unicast(msg *pb.Message, receiverHandle *pb.PeerID) error
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>5 NetworkStack接口</h2>
+
+<p>NetworkStack接口的方法来自于Communicator接口和Inquirer接口，主要是发送消息和获取消息的一个封装。</p>
+
+<p>```go
+type NetworkStack interface {</p>
+
+<pre><code>Communicator
+Inquirer
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>6 SecurityUtils接口</h2>
+
+<p>SecurityUtils接口用于对消息进行签名和验证。</p>
+
+<p>```go
+type SecurityUtils interface {</p>
+
+<pre><code>Sign(msg []byte) ([]byte, error)
+Verify(peerID *pb.PeerID, signature []byte, message []byte) error
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>7 ReadOnlyLedger接口</h2>
+
+<p>ReadOnlyLedger接口用于访问区块链的信息，只能进行读取不能进行写操作，详细定义如下：</p>
+
+<p>```go
+type ReadOnlyLedger interface {</p>
+
+<pre><code>// 根据ID获取一个区块
+GetBlock(id uint64) (block *pb.Block, err error)
+// 获取区块的大小
+GetBlockchainSize() uint64
+// 获取区块的高度和hash等信息
+GetBlockchainInfo() *pb.BlockchainInfo
+// 获取区块的数据
+GetBlockchainInfoBlob() []byte
+// 获取区块的haader的meta信息
+GetBlockHeadMetadata() ([]byte, error)
+</code></pre>
+
+<p>}
+```
+pb.Block表示一个区块，包括版本、hash值、transaction等，具体这里就不多介绍了。</p>
+
+<h2>8 LegacyExecutor接口</h2>
+
+<p>LegacyExecutor接口用于执行事务相关的保重，会修改账本的内容，提供的方法如下：</p>
+
+<p>```go
+type LegacyExecutor interface {</p>
+
+<pre><code>// 开启一个事务，并提供事务id
+BeginTxBatch(id interface{}) error
+// 执行事务id
+ExecTxs(id interface{}, txs []*pb.Transaction) ([]byte, error)
+// 提交事务id
+CommitTxBatch(id interface{}, metadata []byte) (*pb.Block, error)
+// 回滚事务id
+RollbackTxBatch(id interface{}) error
+// 事务提交前的预览
+PreviewCommitTxBatch(id interface{}, metadata []byte) ([]byte, error)
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>9 Executor接口</h2>
+
+<p>Executor接口最终会替换掉老的事务执行接口，也就是LegacyExecutor接口。调用LegacyExecutor接口进行事务操作时，为了避免资源竞争和损坏账本，必须与状态转移进行协调。（个人理解就是需要锁来进行协调）</p>
+
+<p>```go
+type Executor interface {</p>
+
+<pre><code>// 获取所需要的资源
+Start()         
+// 释放所占有的资源                            
+Halt()        
+// 执行一系列的事务                           
+Execute(tag interface{}, txs []*pb.Transaction)
+// 事务执行完成之后进行提交
+Commit(tag interface{}, metadata []byte)  
+// 事务的回滚操作
+Rollback(tag interface{})  
+// 更新状态
+UpdateState(tag interface{}, target *pb.BlockchainInfo, peers []*pb.PeerID)
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>10 LedgerManager接口</h2>
+
+<p>LedgerManager接口用于管理账本的状态。</p>
+
+<p>```go
+type LedgerManager interface {</p>
+
+<pre><code>// 使账本为无效状态，在该状态应该拒绝查询
+InvalidateState()
+// 使用账本为有效状态，当前状态下应该恢复为可提供查询操作
+ValidateState()
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>11 StatePersistor接口</h2>
+
+<p>StatePersistor接口用于保存共识状态，防止进程崩溃丢失状态。</p>
+
+<p>```go
+type StatePersistor interface {</p>
+
+<pre><code>// 存储状态
+StoreState(key string, value []byte) error
+// 读取状态
+ReadState(key string) ([]byte, error)
+// 按前缀读取状态信息
+ReadStateSet(prefix string) (map[string][]byte, error)
+// 删除状态
+DelState(key string)
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>12 Stack接口</h2>
+
+<p>Stack接口仅仅是对共识plugin需要实现的接口进行了一层封装，具体如下：</p>
+
+<p>```go
+type Stack interface {</p>
+
+<pre><code>NetworkStack
+SecurityUtils
+Executor
+LegacyExecutor
+LedgerManager
+ReadOnlyLedger
+StatePersistor
+</code></pre>
+
+<p>}
+```</p>
+
+<p>以上是对consensus的接口的介绍，目前fabric提供了两种共识算法的实现，分别是noops和pbft，noops主要是针对单节点的实现，主要用于测试；而pbft是一种拜占庭容错算法，用于多节点的共识机制。</p>
+
+<p>fabric多节点的共识机制使用的是pbft。</p>
+]]></content>
+  </entry>
+  
+</feed>
