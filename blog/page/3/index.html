@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>zookeeper源码分析(三)——类QuorumPeer的分析 - 精神兵的 Blog</title>
+  <title>精神兵的 Blog</title>
   <meta name="author" content="jackliu">
 
   
-  <meta name="description" content="在Zookeeper中，类QuoromPeer处在非常重要的地位，它管理了quorum协议，并且包含以下三种状态： Leader选择：每个server都将选出一个leader（最初建议server自己为leader）。
-Follower：处于该状态的server将与leader进行同步， &hellip;">
+  <meta name="description" content="引言 以前光顾着学习了，不爱写博客，马上就要工作了，得养成写博客总结的习惯，从现在做起吧。Hello World大家都见过很多了，今天我来写个Hello Octopress，其实大家都明白，跟Hello World没啥区别，让我们开始吧。 Hello Octopress &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +18,7 @@ Follower：处于该状态的server将与leader进行同步， &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jackliu8722.github.com/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/">
+  <link rel="canonical" href="http://jackliu8722.github.com/blog/page/3/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -106,12 +105,15 @@ Follower：处于该状态的server将与leader进行同步， &hellip;">
 </nav>
   <div id="main">
     <div id="content">
-      <div>
-<article class="hentry" role="article">
+      <div class="blog-index">
   
+  
+  
+    <article>
+      
   <header>
     
-      <h1 class="entry-title">zookeeper源码分析(三)——类QuorumPeer的分析</h1>
+      <h1 class="entry-title"><a href="/blog/2012/12/17/hello-octopress/">Hello Octopress</a></h1>
     
     
       <p class="meta">
@@ -127,101 +129,60 @@ Follower：处于该状态的server将与leader进行同步， &hellip;">
   
 
 
-<time datetime="2013-10-29T23:12:00+08:00" pubdate data-updated="true">2013年10月29日</time>
+<time datetime="2012-12-17T20:16:00+08:00" pubdate data-updated="true">2012年12月17日</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>在Zookeeper中，类QuoromPeer处在非常重要的地位，它管理了quorum协议，并且包含以下三种状态：</p>
+  <div class="entry-content"><h2>引言</h2>
 
-<ol>
-<li>Leader选择：每个server都将选出一个leader（最初建议server自己为leader）。</li>
-<li>Follower：处于该状态的server将与leader进行同步，并且复制任务事务。</li>
-<li>Leader：处于leader状态的server处理请求，并转发给Follower。大部分Follower在接受请求之前必须将请求输出到日志中。</li>
-</ol>
+<p>   以前光顾着学习了，不爱写博客，马上就要工作了，得养成写博客总结的习惯，从现在做起吧。Hello World大家都见过很多了，今天我来写个Hello Octopress，其实大家都明白，跟Hello World没啥区别，让我们开始吧。</p>
 
+<h2>Hello Octopress</h2>
+
+<figure class='code'><figcaption><span>hello_octopress.py </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">HelloOctopress</span><span class="p">:</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class='line'>      <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Hello Octopress!&quot;</span>
+</span><span class='line'>  <span class="k">def</span> <span class="nf">print</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class='line'>      <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+</span><span class='line'>          <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
+</span><span class='line'><span class="n">ho</span> <span class="o">=</span> <span class="n">HelloOctopress</span><span class="p">()</span>
+</span><span class='line'><span class="n">ho</span><span class="o">.</span><span class="k">print</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>结论</h2>
+
+<p>哈哈，代码就几行，Hello Octopress完成！
+期待自己写一篇精彩的文章！
+Good luck!</p>
 </div>
-
-
-  <footer>
-    <p class="meta">
-      
   
-
-<span class="byline author vcard">Posted by <span class="fn">jackliu</span></span>
-
-      
-
-
-
-
-
-
-
-
   
 
 
-<time datetime="2013-10-29T23:12:00+08:00" pubdate data-updated="true">2013年10月29日</time>
-      
-
-<span class="categories">
+    </article>
   
-    <a class='category' href='/blog/categories/distributed/'>分布式</a>
-  
-</span>
-
-
-    </p>
+  <div class="pagination">
     
-      <div class="sharing">
-  
-  
-  
-  
-</div>
-<hr style="border-bottom:1px dotted #bdbabd;height:1px;border-top:0px;border-left:0px;border-right:0px;" />
-
-
- 
-      <!-- JiaThis Button BEGIN -->
-<div class="jiathis_style">
-	<span class="jiathis_txt">分享到：</span>
-	<a class="jiathis_button_tools_1"></a>
-	<a class="jiathis_button_tools_2"></a>
-	<a class="jiathis_button_tools_3"></a>
-	<a class="jiathis_button_tools_4"></a>
-	<a href="http://www.jiathis.com/share?uid=1836686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
-	<a class="jiathis_counter_style"></a>
-</div>
-<script type="text/javascript">
-var jiathis_config = {data_track_clickback:'true'};
-</script>
-<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=1355984157367920" charset="utf-8"></script>
-<!-- JiaThis Button END -->
-<!-- UJian Button BEGIN -->
-	<div class="ujian-hook"></div>
-	<script type="text/javascript" src="http://v1.ujian.cc/code/ujian.js"></script>
-<!-- UJian Button END -->
-
-  
-
     
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/blog/2013/10/26/urllib2-with-python/" title="Previous Post: 如何使用urllib2获取网络资源">&laquo; 如何使用urllib2获取网络资源</a>
-      
-      
-        <a class="basic-alignment right" href="/blog/2013/11/07/linux-kernel-001/" title="Next Post: linux源码分析之进程表示">linux源码分析之进程表示 &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
+     <a href="/blog/archives">查看博客列表</a> 
+    
+    <a class="next" href="/blog/page/2/">Newer &rarr;</a>
+    
+  </div>
 </div>
-
 <aside class="sidebar">
   
     
@@ -257,7 +218,7 @@ var jiathis_config = {data_track_clickback:'true'};
       </li>
     
       <li class="post">
-        <a href="/blog/2015/11/14/innodb-01-mysql-install/">Innodb源码分析(1)--Mysql环境的搭建</a>
+        <a href="/blog/2015/11/14/innodb-01-mysql-install/">Innodb源码分析(1)&#8211;Mysql环境的搭建</a>
       </li>
     
       <li class="post">
@@ -291,22 +252,6 @@ var jiathis_config = {data_track_clickback:'true'};
 
   
 </aside>
-
-<section>
-<h1>发表评论</h1>
- <div class="ds-thread"></div>
-  <script type="text/javascript">
-  var duoshuoQuery = {short_name:"yangdd"};
-  (function() {
-      var ds = document.createElement('script');
-      ds.type = 'text/javascript';ds.async = true;
-      ds.src = 'http://static.duoshuo.com/embed.js';
-      ds.charset = 'UTF-8';
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(ds);
-  })();
-  </script>
-
-</section>
 
     </div>
   </div>

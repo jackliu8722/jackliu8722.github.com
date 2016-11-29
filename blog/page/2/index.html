@@ -9,9 +9,7 @@
   <meta name="author" content="jackliu">
 
   
-  <meta name="description" content="注意:本文翻译自ice官方文档 本文实现了一个简单的（但是完整的）客户端和服务器。 实现一个ICE应用程序包括以下几个步骤： 完成slice定义并编译。
-实现一个服务器并编译。
-实现一个客户端并编译。 如果已经实现了服务器，那么只需要写一个客户端，并且不需要写slice定义，只进行编译就行（很明显 &hellip;">
+  <meta name="description" content="注意:本文翻译自Python官方文档，Python的版本为3.3.2 1 简介 urllib.request是Python的一个模块，它可以通过URL（统一资源定位）获取网络上的信息。该模块提供了一个非常简单的接口函数urlopen,能够使用不同的协议获取URL指定的资源。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -109,6 +107,171 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/26/urllib2-with-python/">如何使用urllib2获取网络资源</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-26T17:00:00+08:00" pubdate data-updated="true">2013年10月26日</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p></br>
+<b>注意</b>:本文翻译自Python官方文档，Python的版本为3.3.2</p>
+
+<h3>1 简介</h3>
+
+<p>urllib.request是Python的一个模块，它可以通过URL（统一资源定位）获取网络上的信息。该模块提供了一个非常简单的接口函数urlopen,能够使用不同的协议获取URL指定的资源。它还提供了一个稍微复杂的接口处理常见的情况，比如基本的身份验证、cookies、代理等等。</p>
+
+<p>urllib通过相关的网络协议（例如，FTP,HTTP）可以支持许多URL schemes（由URL字符串中的&#8221;:&#8221;符号之前的字符串标识，例如，ftp是URL&#8221;ftp://python.org/&#8221;的schemes）.本教程重点介绍最常用的协议——HTTP。</p>
+
+<p>对于简单的应用中，urlopen的使用是非常简单的，但是，当你打开HTTP协议的网址时，只要遇到一些错误或者不可处理的情况，就需要对HTTP协议有一定的理解。HTTP最全面最权威的参考文档是RFC 2616，这是一个技术文档，而且不易于阅读。此处的使用文档的目的是介绍urlib的使用，关于HTTP更多的细节可以参考RFC 2616文档，它的作用不是取代urllib.request文档，而是作为urllib.request的一个补充知识。</p>
+
+<h3>2 获取网络资源</h3>
+
+<p>使用urllib.request的最简单的方法如下：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="n">response</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="s">&#39;http://python.org/&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">html</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>如果想通过URL检索资源，并将结果存储在一个临时位置，可以通过urlretrieve函数到达要求。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="n">local_filename</span><span class="p">,</span><span class="n">headers</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="s">&#39;http://python.org/&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">html</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_filename</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>urllib的使用就如以上的方法那样简单（注意，除了使用http,我们也可以使用ftp协议，file等等。），然而本教程的目的是介绍更复杂的HTTP协议。</p>
+
+<p>HTTP协议包括请求和响应，客户端发出请求，而服务器响应请求。urllib.request代表了HTTP的请求对象，表示我们创建的服务请求。在最简单的形式中，首先创建一个Request对象，指定需要获取资源的URL，然后调用urlopen返回一个针对请求的响应对象，这处响应对象类似文件对象，也就是说，可以调用read函数获取响应的内容。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s">&#39;http://www.voidspace.org.uk&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">response</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urllopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">the_page</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>需要注意的是，urllib.request使用相同的请求接口来处理所有的URL方案。例如，可以使用以下的方式使用FTP请求：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="s">&#39;ftp://example.com/&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>在处理HTTP的情况下，请求对象允许你可以做额外的两件事：首先，可以将数据发送给服务器。其次你可以将与数据有关的其它信息（元数据）或者请求自身发送给服务器，这些信息通过设置HTTP头进行传输。让我们依次介绍这些内容。</p>
+
+<h4>2.1 数据</h4>
+
+<p>有时我们想向一个URL指定的地址发送数据（通常URL地址涉及一个CGI(公共网关接口)脚本或者其它的web应用程序）。在HTTP协议中，我们通常使用POST请求来完成这样的任务。当我们提交一个HTML表单时，浏览器通常使用POST请求，并非所有POST请求都来自表单。我们可以使用一个POST向我们的应用程序传输任意的数据。在HTML表单中，数据使用一种标准的方式进行编码，然后以参数的形式传给Request对象，在Python中，使用urllib.parse库来完成数据的编码。</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   <span class="kn">import</span> <span class="nn">urllib.parse</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://www.someserver.com/cgi-bin/register.cgi&#39;</span>
+</span><span class='line'>  <span class="n">values</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;name&#39;</span> <span class="p">:</span> <span class="s">&#39;Michael Foord&#39;</span><span class="p">,</span>
+</span><span class='line'>             <span class="s">&#39;location&#39;</span> <span class="p">:</span> <span class="s">&#39;Northampton&#39;</span><span class="p">,</span>
+</span><span class='line'>             <span class="s">&#39;language&#39;</span> <span class="p">:</span> <span class="s">&#39;Python&#39;</span><span class="p">}</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">req</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">response</span> <span class="o">=</span> <span class="n">url</span> <span class="n">lib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'>  <span class="n">the_page</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>需要注意的是，有时候需要设置其它的编码方式（如上传文件的HTML表单——更多的介绍参见HTML规范中的表单提交）。</p>
+
+<p>如果不传递参数data，则urllib使用GET请求。GTE请求与POST请求之间存在区别，其中一个区别是POST请求往往存在副作用，它可以以某种方式改变系统的状态。尽管HTTP协议的标准制定者清楚知道POST请求总是会产生副作用，GET请求永远不会引起副作用，没有什么能够使GET请求生产副作用，也没有什么能够使用HOST请求无副作用。数据也可以在HTTP GET请求中，通过URL编码的方式进行传递。通过以下方式实现：</p>
+
+<figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='python'><span class='line'>   <span class="kn">import</span> <span class="nn">urllib.request</span>
+</span><span class='line'>  <span class="kn">import</span> <span class="nn">urllib.parse</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Somebody Here&#39;</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Northhampton&#39;</span>
+</span><span class='line'>  <span class="n">data</span><span class="p">[</span><span class="s">&#39;language&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Python&#39;</span>
+</span><span class='line'>  <span class="n">url_values</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlencode</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="k">print</span><span class="p">(</span><span class="n">url_values</span><span class="p">)</span>
+</span><span class='line'>  
+</span><span class='line'>  <span class="n">url</span> <span class="o">=</span> <span class="s">&#39;http://www.example.com/example.cgi&#39;</span>
+</span><span class='line'>  <span class="n">full_url</span><span class="o">=</span><span class="n">url</span> <span class="o">+</span> <span class="s">&quot;?&quot;</span> <span class="o">+</span> <span class="n">url_values</span>
+</span><span class='line'>  <span class="n">data</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">full_url</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>请注意，通过添加符号?并紧跟着编码好的值在其后的方式来创建完整的URL。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -1321,73 +1484,9 @@ KL是KL距离，也就是Kullback-Leibler差异（Kullback-Leibler Divergence）
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/12/17/hello-octopress/">Hello Octopress</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-12-17T20:16:00+08:00" pubdate data-updated="true">2012年12月17日</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>引言</h2>
-
-<p>   以前光顾着学习了，不爱写博客，马上就要工作了，得养成写博客总结的习惯，从现在做起吧。Hello World大家都见过很多了，今天我来写个Hello Octopress，其实大家都明白，跟Hello World没啥区别，让我们开始吧。</p>
-
-<h2>Hello Octopress</h2>
-
-<figure class='code'><figcaption><span>hello_octopress.py </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-</pre></td><td class='code'><pre><code class='python'><span class='line'><span class="k">class</span> <span class="nc">HelloOctopress</span><span class="p">:</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span class='line'>      <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Hello Octopress!&quot;</span>
-</span><span class='line'>  <span class="k">def</span> <span class="nf">print</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span class='line'>      <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
-</span><span class='line'>          <span class="k">print</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
-</span><span class='line'><span class="n">ho</span> <span class="o">=</span> <span class="n">HelloOctopress</span><span class="p">()</span>
-</span><span class='line'><span class="n">ho</span><span class="o">.</span><span class="k">print</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<h2>结论</h2>
-
-<p>哈哈，代码就几行，Hello Octopress完成！
-期待自己写一篇精彩的文章！
-Good luck!</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
+    
+      <a class="prev" href="/blog/page/3/">&larr; Older</a>
     
     
      <a href="/blog/archives">查看博客列表</a> 
@@ -1407,7 +1506,7 @@ Good luck!</p>
   <li><a href='/blog/categories/Python/'>Python (1)</a></li>
   <li><a href='/blog/categories/others/'>其它 (3)</a></li>
   <li><a href='/blog/categories/distributed/'>分布式 (9)</a></li>
-  <li><a href='/blog/categories/blockchain/'>区块链 (1)</a></li>
+  <li><a href='/blog/categories/blockchain/'>区块链 (2)</a></li>
   <li><a href='/blog/categories/db/'>存储 (1)</a></li>
   <li><a href='/blog/categories/ml/'>机器学习 (2)</a></li>
   <li><a href='/blog/categories/arch/'>架构 (2)</a></li>
@@ -1417,6 +1516,10 @@ Good luck!</p>
 <section>
   <h1>最近博文</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/11/29/fabric-consensus-analysis-2/">fabric共识机制分析2</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/10/13/fabric-consensus-analysis-1/">fabric共识机制分析1</a>
@@ -1432,10 +1535,6 @@ Good luck!</p>
     
       <li class="post">
         <a href="/blog/2015/05/04/wei-xin-hong-bao-yuan-li/">微信红包原理</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/">Cassandra架构与源码分析(一)</a>
       </li>
     
   </ul>

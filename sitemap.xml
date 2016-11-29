@@ -2,106 +2,110 @@
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
         <loc>http://jackliu8722.github.com/blog/2012/12/17/hello-octopress/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/09/05/octopressde-an-zhuang-yu-pei-zhi/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/09/08/emsuan-fa/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/09/18/linuxchang-yong-ming-ling-ji-jin/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://jackliu8722.github.com/blog/2013/09/18/zai-octopresszhong-xian-shi-shu-xue-gong-shi/
         </loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://jackliu8722.github.com/blog/2013/10/09/zookeeper-yuan-ma-fen-xi-01-jian-jie/
         </loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/10/16/pca/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://jackliu8722.github.com/blog/2013/10/16/zookeeper-yuan-ma-fen-xi-02-serverqi-dong-liu-cheng/
         </loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/10/20/ice-chat-demo/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://jackliu8722.github.com/blog/2013/10/21/writing-an-ice-application-with-java/
         </loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/10/26/urllib2-with-python/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://jackliu8722.github.com/blog/2013/10/29/zookeeper-yuan-ma-fen-xi-03-lei-quorumpeer-fen-xi/
         </loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/11/07/linux-kernel-001/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2013/11/08/zookeeper-java-example/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2014/03/18/merkle-tree/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://jackliu8722.github.com/blog/2014/03/18/cassandra-jia-gou-yu-yuan-ma-fen-xi-01/
         </loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2015/05/04/wei-xin-hong-bao-yuan-li/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2015/11/14/innodb-01-mysql-install/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2016/01/06/thrift-network-package-introduce/</loc>
-        <lastmod>2016-06-07T10:16:44+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/2016/10/13/fabric-consensus-analysis-1/</loc>
-        <lastmod>2016-10-13T18:54:08+08:00</lastmod>
+        <lastmod>2016-11-29T14:18:58+08:00</lastmod>
+    </url>
+    <url>
+        <loc>http://jackliu8722.github.com/blog/2016/11/29/fabric-consensus-analysis-2/</loc>
+        <lastmod>2016-11-29T14:38:33+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/about/</loc>
-        <lastmod>2016-06-02T17:28:14+08:00</lastmod>
+        <lastmod>2016-10-13T19:10:04+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/blog/archives/</loc>
-        <lastmod>2016-10-13T18:54:08+08:00</lastmod>
+        <lastmod>2016-11-29T14:38:33+08:00</lastmod>
     </url>
     <url>
         <loc>http://jackliu8722.github.com/</loc>
-        <lastmod>2016-10-13T18:54:08+08:00</lastmod>
+        <lastmod>2016-11-29T14:38:33+08:00</lastmod>
     </url>
 </urlset>

@@ -4,7 +4,7 @@
   <title><![CDATA[博客分类: Linux | 精神兵的 Blog]]></title>
   <link href="http://jackliu8722.github.com/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://jackliu8722.github.com/"/>
-  <updated>2016-10-13T18:56:44+08:00</updated>
+  <updated>2016-11-29T14:39:37+08:00</updated>
   <id>http://jackliu8722.github.com/</id>
   <author>
     <name><![CDATA[jackliu]]></name>
@@ -21,581 +21,293 @@
     <content type="html"><![CDATA[<p>linux进程的概念在这里就不介绍，网上可以找到非常多的资料进行学习，这里主要介绍在linux系统中，进程是如何表示的，作为学习后个笔记。</p>
 
 <p>Linux内核涉及进程和程序的所有算法都围绕一个名为task_struct的数据结构建立，该结构定义在内核源码的include/sched.h文件中。task_struct是一个结构体，包含非常多的成员，其完整结构体如下：
- <div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-<span class='line-number'>36</span>
-<span class='line-number'>37</span>
-<span class='line-number'>38</span>
-<span class='line-number'>39</span>
-<span class='line-number'>40</span>
-<span class='line-number'>41</span>
-<span class='line-number'>42</span>
-<span class='line-number'>43</span>
-<span class='line-number'>44</span>
-<span class='line-number'>45</span>
-<span class='line-number'>46</span>
-<span class='line-number'>47</span>
-<span class='line-number'>48</span>
-<span class='line-number'>49</span>
-<span class='line-number'>50</span>
-<span class='line-number'>51</span>
-<span class='line-number'>52</span>
-<span class='line-number'>53</span>
-<span class='line-number'>54</span>
-<span class='line-number'>55</span>
-<span class='line-number'>56</span>
-<span class='line-number'>57</span>
-<span class='line-number'>58</span>
-<span class='line-number'>59</span>
-<span class='line-number'>60</span>
-<span class='line-number'>61</span>
-<span class='line-number'>62</span>
-<span class='line-number'>63</span>
-<span class='line-number'>64</span>
-<span class='line-number'>65</span>
-<span class='line-number'>66</span>
-<span class='line-number'>67</span>
-<span class='line-number'>68</span>
-<span class='line-number'>69</span>
-<span class='line-number'>70</span>
-<span class='line-number'>71</span>
-<span class='line-number'>72</span>
-<span class='line-number'>73</span>
-<span class='line-number'>74</span>
-<span class='line-number'>75</span>
-<span class='line-number'>76</span>
-<span class='line-number'>77</span>
-<span class='line-number'>78</span>
-<span class='line-number'>79</span>
-<span class='line-number'>80</span>
-<span class='line-number'>81</span>
-<span class='line-number'>82</span>
-<span class='line-number'>83</span>
-<span class='line-number'>84</span>
-<span class='line-number'>85</span>
-<span class='line-number'>86</span>
-<span class='line-number'>87</span>
-<span class='line-number'>88</span>
-<span class='line-number'>89</span>
-<span class='line-number'>90</span>
-<span class='line-number'>91</span>
-<span class='line-number'>92</span>
-<span class='line-number'>93</span>
-<span class='line-number'>94</span>
-<span class='line-number'>95</span>
-<span class='line-number'>96</span>
-<span class='line-number'>97</span>
-<span class='line-number'>98</span>
-<span class='line-number'>99</span>
-<span class='line-number'>100</span>
-<span class='line-number'>101</span>
-<span class='line-number'>102</span>
-<span class='line-number'>103</span>
-<span class='line-number'>104</span>
-<span class='line-number'>105</span>
-<span class='line-number'>106</span>
-<span class='line-number'>107</span>
-<span class='line-number'>108</span>
-<span class='line-number'>109</span>
-<span class='line-number'>110</span>
-<span class='line-number'>111</span>
-<span class='line-number'>112</span>
-<span class='line-number'>113</span>
-<span class='line-number'>114</span>
-<span class='line-number'>115</span>
-<span class='line-number'>116</span>
-<span class='line-number'>117</span>
-<span class='line-number'>118</span>
-<span class='line-number'>119</span>
-<span class='line-number'>120</span>
-<span class='line-number'>121</span>
-<span class='line-number'>122</span>
-<span class='line-number'>123</span>
-<span class='line-number'>124</span>
-<span class='line-number'>125</span>
-<span class='line-number'>126</span>
-<span class='line-number'>127</span>
-<span class='line-number'>128</span>
-<span class='line-number'>129</span>
-<span class='line-number'>130</span>
-<span class='line-number'>131</span>
-<span class='line-number'>132</span>
-<span class='line-number'>133</span>
-<span class='line-number'>134</span>
-<span class='line-number'>135</span>
-<span class='line-number'>136</span>
-<span class='line-number'>137</span>
-<span class='line-number'>138</span>
-<span class='line-number'>139</span>
-<span class='line-number'>140</span>
-<span class='line-number'>141</span>
-<span class='line-number'>142</span>
-<span class='line-number'>143</span>
-<span class='line-number'>144</span>
-<span class='line-number'>145</span>
-<span class='line-number'>146</span>
-<span class='line-number'>147</span>
-<span class='line-number'>148</span>
-<span class='line-number'>149</span>
-<span class='line-number'>150</span>
-<span class='line-number'>151</span>
-<span class='line-number'>152</span>
-<span class='line-number'>153</span>
-<span class='line-number'>154</span>
-<span class='line-number'>155</span>
-<span class='line-number'>156</span>
-<span class='line-number'>157</span>
-<span class='line-number'>158</span>
-<span class='line-number'>159</span>
-<span class='line-number'>160</span>
-<span class='line-number'>161</span>
-<span class='line-number'>162</span>
-<span class='line-number'>163</span>
-<span class='line-number'>164</span>
-<span class='line-number'>165</span>
-<span class='line-number'>166</span>
-<span class='line-number'>167</span>
-<span class='line-number'>168</span>
-<span class='line-number'>169</span>
-<span class='line-number'>170</span>
-<span class='line-number'>171</span>
-<span class='line-number'>172</span>
-<span class='line-number'>173</span>
-<span class='line-number'>174</span>
-<span class='line-number'>175</span>
-<span class='line-number'>176</span>
-<span class='line-number'>177</span>
-<span class='line-number'>178</span>
-<span class='line-number'>179</span>
-<span class='line-number'>180</span>
-<span class='line-number'>181</span>
-<span class='line-number'>182</span>
-<span class='line-number'>183</span>
-<span class='line-number'>184</span>
-<span class='line-number'>185</span>
-<span class='line-number'>186</span>
-<span class='line-number'>187</span>
-<span class='line-number'>188</span>
-<span class='line-number'>189</span>
-<span class='line-number'>190</span>
-<span class='line-number'>191</span>
-<span class='line-number'>192</span>
-<span class='line-number'>193</span>
-<span class='line-number'>194</span>
-<span class='line-number'>195</span>
-<span class='line-number'>196</span>
-<span class='line-number'>197</span>
-<span class='line-number'>198</span>
-<span class='line-number'>199</span>
-<span class='line-number'>200</span>
-<span class='line-number'>201</span>
-<span class='line-number'>202</span>
-<span class='line-number'>203</span>
-<span class='line-number'>204</span>
-<span class='line-number'>205</span>
-<span class='line-number'>206</span>
-<span class='line-number'>207</span>
-<span class='line-number'>208</span>
-<span class='line-number'>209</span>
-<span class='line-number'>210</span>
-<span class='line-number'>211</span>
-<span class='line-number'>212</span>
-<span class='line-number'>213</span>
-<span class='line-number'>214</span>
-<span class='line-number'>215</span>
-<span class='line-number'>216</span>
-<span class='line-number'>217</span>
-<span class='line-number'>218</span>
-<span class='line-number'>219</span>
-<span class='line-number'>220</span>
-<span class='line-number'>221</span>
-<span class='line-number'>222</span>
-<span class='line-number'>223</span>
-<span class='line-number'>224</span>
-<span class='line-number'>225</span>
-<span class='line-number'>226</span>
-<span class='line-number'>227</span>
-<span class='line-number'>228</span>
-<span class='line-number'>229</span>
-<span class='line-number'>230</span>
-<span class='line-number'>231</span>
-<span class='line-number'>232</span>
-<span class='line-number'>233</span>
-<span class='line-number'>234</span>
-<span class='line-number'>235</span>
-<span class='line-number'>236</span>
-<span class='line-number'>237</span>
-<span class='line-number'>238</span>
-<span class='line-number'>239</span>
-<span class='line-number'>240</span>
-<span class='line-number'>241</span>
-<span class='line-number'>242</span>
-<span class='line-number'>243</span>
-<span class='line-number'>244</span>
-<span class='line-number'>245</span>
-<span class='line-number'>246</span>
-<span class='line-number'>247</span>
-<span class='line-number'>248</span>
-<span class='line-number'>249</span>
-<span class='line-number'>250</span>
-<span class='line-number'>251</span>
-<span class='line-number'>252</span>
-<span class='line-number'>253</span>
-<span class='line-number'>254</span>
-<span class='line-number'>255</span>
-<span class='line-number'>256</span>
-<span class='line-number'>257</span>
-<span class='line-number'>258</span>
-<span class='line-number'>259</span>
-<span class='line-number'>260</span>
-<span class='line-number'>261</span>
-<span class='line-number'>262</span>
-<span class='line-number'>263</span>
-<span class='line-number'>264</span>
-<span class='line-number'>265</span>
-<span class='line-number'>266</span>
-<span class='line-number'>267</span>
-<span class='line-number'>268</span>
-<span class='line-number'>269</span>
-<span class='line-number'>270</span>
-<span class='line-number'>271</span>
-<span class='line-number'>272</span>
-<span class='line-number'>273</span>
-<span class='line-number'>274</span>
-<span class='line-number'>275</span>
-<span class='line-number'>276</span>
-<span class='line-number'>277</span>
-<span class='line-number'>278</span>
-<span class='line-number'>279</span>
-<span class='line-number'>280</span>
-<span class='line-number'>281</span>
-<span class='line-number'>282</span>
-<span class='line-number'>283</span>
-<span class='line-number'>284</span>
-<span class='line-number'>285</span>
-<span class='line-number'>286</span>
-<span class='line-number'>287</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">struct</span> <span class="n">task_struct</span> <span class="p">{</span>
-</span><span class='line'>    <span class="k">volatile</span> <span class="kt">long</span> <span class="n">state</span><span class="p">;</span>    <span class="cm">/* 进程状态：-1 表示不可运行, 0 表示可运行, &amp;gt;0 表示停止 */</span>
-</span><span class='line'>    <span class="kt">void</span> <span class="o">*</span><span class="n">stack</span><span class="p">;</span>  <span class="cm">/* 进程内核栈*/</span>
-</span><span class='line'>    <span class="n">atomic_t</span> <span class="n">usage</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* </span>
-</span><span class='line'><span class="cm">      每个进程当前的状态标志：</span>
-</span><span class='line'><span class="cm">      0x00000002 表示进程正在在被创建</span>
-</span><span class='line'><span class="cm">      0x00000004 表示进程正准备退出</span>
-</span><span class='line'><span class="cm">      0x00000040 表示此进程被fork系统调用创建，但并没有执行exec</span>
-</span><span class='line'><span class="cm">      0x00000400 表示此进程由于其它进行发送相关信号矶被杀死 </span>
-</span><span class='line'><span class="cm">     */</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">ptrace</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">lock_depth</span><span class="p">;</span>     <span class="cm">/* 大内核锁深度 */</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_SMP</span>
-</span><span class='line'>    <span class="cp">#ifdef __ARCH_WANT_UNLOCKED_CTXSW</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">oncpu</span><span class="p">;</span>  <span class="cm">/* 指示进程运行的CPU */</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cm">/* </span>
-</span><span class='line'><span class="cm">     * static_prio是表态优先级，也就是进程启动时分配的优先级</span>
-</span><span class='line'><span class="cm">     * prio,normal_prio是动态优先级 </span>
-</span><span class='line'><span class="cm">     */</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">prio</span><span class="p">,</span> <span class="n">static_prio</span><span class="p">,</span> <span class="n">normal_prio</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* run_list是一个表头，用于维护包含各进程的一个运行表*/</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">run_list</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">const</span> <span class="k">struct</span> <span class="n">sched_class</span> <span class="o">*</span><span class="n">sched_class</span><span class="p">;</span> <span class="cm">/*表示该进程所属的调用器类*/</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">sched_entity</span> <span class="n">se</span><span class="p">;</span> <span class="cm">/* 调度实体*/</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_PREEMPT_NOTIFIERS</span>
-</span><span class='line'>    <span class="cm">/* 结构体preempt_notifier链表，与抢占有关*/</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">hlist_head</span> <span class="n">preempt_notifiers</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">ioprio</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/*</span>
-</span><span class='line'><span class="cm">    fpu_counter 包含了浮点运算单元用到的上下文切换</span>
-</span><span class='line'><span class="cm">    */</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">fpu_counter</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">s8</span> <span class="n">oomkilladj</span><span class="p">;</span> <span class="cm">/* OOM kill score adjustment (bit shift). */</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_BLK_DEV_IO_TRACE</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">btrace_seq</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/*</span>
-</span><span class='line'><span class="cm">     * policy保存了对该进程应用的调度策略，有5个可能的值</span>
-</span><span class='line'><span class="cm">     * SCHED_NORMAL 用于普通进程，通过完全公平调度器来处理。</span>
-</span><span class='line'><span class="cm">     * SCHED_BATCH和SCHED_IDLE 也通过完全公平调度器来处理，不过用于次要的进程。</span>
-</span><span class='line'><span class="cm">     * SCHED_BATCH用于交互，CPU使用密集的批处理进程。</span>
-</span><span class='line'><span class="cm">     * SCHED_RR和SCHED_FIFO用于实现软实时进程，SCHED_RR实现了一种循环方法，而SCHED_FIFO则使用先进先出机制。</span>
-</span><span class='line'><span class="cm">     */</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">policy</span><span class="p">;</span>  <span class="cm">/* 高度策略 */</span>
-</span><span class='line'>    <span class="cm">/*cpus_allowed是一个位域，在多处理品系统上使用，用来限制进程可以在哪些CPU上运行*/</span>
-</span><span class='line'>    <span class="n">cpumask_t</span> <span class="n">cpus_allowed</span><span class="p">;</span> <span class="cm">/* 多核体系结构中管理CPU的位图*/</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">time_slice</span><span class="p">;</span> <span class="cm">/*指定进程可使用CPU的剩余时间段*/</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cp">#if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">sched_info</span> <span class="n">sched_info</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">tasks</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/*</span>
-</span><span class='line'><span class="cm">    * ptrace_list/ptrace_children forms the list of my children</span>
-</span><span class='line'><span class="cm">    * that were stolen by a ptracer.</span>
-</span><span class='line'><span class="cm">    */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">ptrace_children</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">ptrace_list</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">mm_struct</span> <span class="o">*</span><span class="n">mm</span><span class="p">,</span> <span class="o">*</span><span class="n">active_mm</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/* task state */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">linux_binfmt</span> <span class="o">*</span><span class="n">binfmt</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">exit_state</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">exit_code</span><span class="p">,</span> <span class="n">exit_signal</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">pdeath_signal</span><span class="p">;</span>  <span class="cm">/*  The signal sent when the parent dies  */</span>
-</span><span class='line'>    <span class="cm">/* ??? */</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">personality</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="n">did_exec</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">pid_t</span> <span class="n">pid</span><span class="p">;</span> <span class="cm">/* 全局进程ID*/</span>
-</span><span class='line'>    <span class="n">pid_t</span> <span class="n">tgid</span><span class="p">;</span> <span class="cm">/* 局部进程ID*/</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_CC_STACKPROTECTOR</span>
-</span><span class='line'>    <span class="cm">/* Canary value for the -fstack-protector gcc feature */</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">stack_canary</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cm">/* </span>
-</span><span class='line'><span class="cm">    * pointers to (original) parent process, youngest child, younger sibling,</span>
-</span><span class='line'><span class="cm">    * older sibling, respectively.  (p-&amp;gt;father can be replaced with </span>
-</span><span class='line'><span class="cm">    * p-&amp;gt;parent-&amp;gt;pid)</span>
-</span><span class='line'><span class="cm">    */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">task_struct</span> <span class="o">*</span><span class="n">real_parent</span><span class="p">;</span> <span class="cm">/* real parent process (when being debugged) */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">task_struct</span> <span class="o">*</span><span class="n">parent</span><span class="p">;</span> <span class="cm">/* parent process */</span>
-</span><span class='line'>    <span class="cm">/*</span>
-</span><span class='line'><span class="cm">    * children/sibling forms the list of my children plus the</span>
-</span><span class='line'><span class="cm">    * tasks I&#39;m ptracing.</span>
-</span><span class='line'><span class="cm">    */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">children</span><span class="p">;</span>  <span class="cm">/* list of my children */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">sibling</span><span class="p">;</span>   <span class="cm">/* linkage in my parent&#39;s children list */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">task_struct</span> <span class="o">*</span><span class="n">group_leader</span><span class="p">;</span>   <span class="cm">/* threadgroup leader */</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/* PID/PID hash table linkage. */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">pid_link</span> <span class="n">pids</span><span class="p">[</span><span class="n">PIDTYPE_MAX</span><span class="p">];</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">thread_group</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">completion</span> <span class="o">*</span><span class="n">vfork_done</span><span class="p">;</span>      <span class="cm">/* for vfork() */</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">__user</span> <span class="o">*</span><span class="n">set_child_tid</span><span class="p">;</span>      <span class="cm">/* CLONE_CHILD_SETTID */</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">__user</span> <span class="o">*</span><span class="n">clear_child_tid</span><span class="p">;</span>        <span class="cm">/* CLONE_CHILD_CLEARTID */</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/*</span>
-</span><span class='line'><span class="cm">     *表示实时进程的优先级，最低的实时优先级为0，最高的优先级是99。值越大，表明优先级越高，不同于nice值</span>
-</span><span class='line'><span class="cm">     */</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">rt_priority</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">cputime_t</span> <span class="n">utime</span><span class="p">,</span> <span class="n">stime</span><span class="p">,</span> <span class="n">utimescaled</span><span class="p">,</span> <span class="n">stimescaled</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">cputime_t</span> <span class="n">gtime</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">cputime_t</span> <span class="n">prev_utime</span><span class="p">,</span> <span class="n">prev_stime</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">nvcsw</span><span class="p">,</span> <span class="n">nivcsw</span><span class="p">;</span> <span class="cm">/* context switch counts */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">timespec</span> <span class="n">start_time</span><span class="p">;</span>         <span class="cm">/* monotonic time */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">timespec</span> <span class="n">real_start_time</span><span class="p">;</span>    <span class="cm">/* boot based time */</span>
-</span><span class='line'>    <span class="cm">/* mm fault and swap info: this can arguably be seen as either mm-specific or thread-specific */</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">min_flt</span><span class="p">,</span> <span class="n">maj_flt</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">cputime_t</span> <span class="n">it_prof_expires</span><span class="p">,</span> <span class="n">it_virt_expires</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">it_sched_expires</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">cpu_timers</span><span class="p">[</span><span class="mi">3</span><span class="p">];</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/* process credentials */</span>
-</span><span class='line'>    <span class="n">uid_t</span> <span class="n">uid</span><span class="p">,</span><span class="n">euid</span><span class="p">,</span><span class="n">suid</span><span class="p">,</span><span class="n">fsuid</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">gid_t</span> <span class="n">gid</span><span class="p">,</span><span class="n">egid</span><span class="p">,</span><span class="n">sgid</span><span class="p">,</span><span class="n">fsgid</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">group_info</span> <span class="o">*</span><span class="n">group_info</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">kernel_cap_t</span>   <span class="n">cap_effective</span><span class="p">,</span> <span class="n">cap_inheritable</span><span class="p">,</span> <span class="n">cap_permitted</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="n">keep_capabilities</span><span class="o">:</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">user_struct</span> <span class="o">*</span><span class="n">user</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_KEYS</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">key</span> <span class="o">*</span><span class="n">request_key_auth</span><span class="p">;</span>   <span class="cm">/* assumed request_key authority */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">key</span> <span class="o">*</span><span class="n">thread_keyring</span><span class="p">;</span> <span class="cm">/* keyring private to this thread */</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">jit_keyring</span><span class="p">;</span>  <span class="cm">/* default keyring to attach requested keys to */</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="kt">char</span> <span class="n">comm</span><span class="p">[</span><span class="n">TASK_COMM_LEN</span><span class="p">];</span> <span class="cm">/* executable name excluding path</span>
-</span><span class='line'><span class="cm">                 - access with [gs]et_task_comm (which lock</span>
-</span><span class='line'><span class="cm">                   it with task_lock())</span>
-</span><span class='line'><span class="cm">                 - initialized normally by flush_old_exec */</span>
-</span><span class='line'>    <span class="cm">/* file system info */</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">link_count</span><span class="p">,</span> <span class="n">total_link_count</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_SYSVIPC</span>
-</span><span class='line'>    <span class="cm">/* ipc stuff */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">sysv_sem</span> <span class="n">sysvsem</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cm">/* CPU-specific state of this task */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">thread_struct</span> <span class="kr">thread</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* filesystem information */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">fs_struct</span> <span class="o">*</span><span class="n">fs</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* open file information */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">files_struct</span> <span class="o">*</span><span class="n">files</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* namespaces */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">nsproxy</span> <span class="o">*</span><span class="n">nsproxy</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* signal handlers */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">signal_struct</span> <span class="o">*</span><span class="n">signal</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">sighand_struct</span> <span class="o">*</span><span class="n">sighand</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">sigset_t</span> <span class="n">blocked</span><span class="p">,</span> <span class="n">real_blocked</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">sigset_t</span> <span class="n">saved_sigmask</span><span class="p">;</span>     <span class="cm">/* To be restored with TIF_RESTORE_SIGMASK */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">sigpending</span> <span class="n">pending</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">sas_ss_sp</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">size_t</span> <span class="n">sas_ss_size</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">notifier</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">priv</span><span class="p">);</span>
-</span><span class='line'>    <span class="kt">void</span> <span class="o">*</span><span class="n">notifier_data</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">sigset_t</span> <span class="o">*</span><span class="n">notifier_mask</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_SECURITY</span>
-</span><span class='line'>    <span class="kt">void</span> <span class="o">*</span><span class="n">security</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">audit_context</span> <span class="o">*</span><span class="n">audit_context</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">seccomp_t</span> <span class="n">seccomp</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/* Thread group tracking */</span>
-</span><span class='line'>    <span class="n">u32</span> <span class="n">parent_exec_id</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">u32</span> <span class="n">self_exec_id</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* Protection of (de-)allocation: mm, files, fs, tty, keyrings */</span>
-</span><span class='line'>    <span class="n">spinlock_t</span> <span class="n">alloc_lock</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/* Protection of the PI data structures: */</span>
-</span><span class='line'>    <span class="n">spinlock_t</span> <span class="n">pi_lock</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_RT_MUTEXES</span>
-</span><span class='line'>    <span class="cm">/* PI waiters blocked on a rt_mutex held by this task */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">plist_head</span> <span class="n">pi_waiters</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* Deadlock detection and priority inheritance handling */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">rt_mutex_waiter</span> <span class="o">*</span><span class="n">pi_blocked_on</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_DEBUG_MUTEXES</span>
-</span><span class='line'>    <span class="cm">/* mutex deadlock detection */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">mutex_waiter</span> <span class="o">*</span><span class="n">blocked_on</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_TRACE_IRQFLAGS</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">irq_events</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">hardirqs_enabled</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">hardirq_enable_ip</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">hardirq_enable_event</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">hardirq_disable_ip</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">hardirq_disable_event</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">softirqs_enabled</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">softirq_disable_ip</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">softirq_disable_event</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">softirq_enable_ip</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">softirq_enable_event</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">hardirq_context</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">softirq_context</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_LOCKDEP</span>
-</span><span class='line'>    <span class="cp"># define MAX_LOCK_DEPTH 30UL</span>
-</span><span class='line'>    <span class="n">u64</span> <span class="n">curr_chain_key</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">lockdep_depth</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">held_lock</span> <span class="n">held_locks</span><span class="p">[</span><span class="n">MAX_LOCK_DEPTH</span><span class="p">];</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">lockdep_recursion</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/* journalling filesystem info */</span>
-</span><span class='line'>    <span class="kt">void</span> <span class="o">*</span><span class="n">journal_info</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/* stacked block device info */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">bio</span> <span class="o">*</span><span class="n">bio_list</span><span class="p">,</span> <span class="o">**</span><span class="n">bio_tail</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/* VM state */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">reclaim_state</span> <span class="o">*</span><span class="n">reclaim_state</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">backing_dev_info</span> <span class="o">*</span><span class="n">backing_dev_info</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">io_context</span> <span class="o">*</span><span class="n">io_context</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">ptrace_message</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">siginfo_t</span> <span class="o">*</span><span class="n">last_siginfo</span><span class="p">;</span> <span class="cm">/* For ptrace use.  */</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_TASK_XACCT</span>
-</span><span class='line'>    <span class="cm">/* i/o counters(bytes read/written, #syscalls */</span>
-</span><span class='line'>    <span class="n">u64</span> <span class="n">rchar</span><span class="p">,</span> <span class="n">wchar</span><span class="p">,</span> <span class="n">syscr</span><span class="p">,</span> <span class="n">syscw</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">task_io_accounting</span> <span class="n">ioac</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#if defined(CONFIG_TASK_XACCT)</span>
-</span><span class='line'>    <span class="n">u64</span> <span class="n">acct_rss_mem1</span><span class="p">;</span>  <span class="cm">/* accumulated rss usage */</span>
-</span><span class='line'>    <span class="n">u64</span> <span class="n">acct_vm_mem1</span><span class="p">;</span>   <span class="cm">/* accumulated virtual memory usage */</span>
-</span><span class='line'>    <span class="n">cputime_t</span> <span class="n">acct_stimexpd</span><span class="p">;</span><span class="cm">/* stime since last update */</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_NUMA</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">mempolicy</span> <span class="o">*</span><span class="n">mempolicy</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">short</span> <span class="n">il_next</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_CPUSETS</span>
-</span><span class='line'>    <span class="n">nodemask_t</span> <span class="n">mems_allowed</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">cpuset_mems_generation</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">cpuset_mem_spread_rotor</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_CGROUPS</span>
-</span><span class='line'>    <span class="cm">/* Control Group info protected by css_set_lock */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">css_set</span> <span class="o">*</span><span class="n">cgroups</span><span class="p">;</span>
-</span><span class='line'>    <span class="cm">/* cg_list protected by css_set_lock and tsk-&amp;gt;alloc_lock */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">cg_list</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_FUTEX</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">robust_list_head</span> <span class="n">__user</span> <span class="o">*</span><span class="n">robust_list</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_COMPAT</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">compat_robust_list_head</span> <span class="n">__user</span> <span class="o">*</span><span class="n">compat_robust_list</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">pi_state_list</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">futex_pi_state</span> <span class="o">*</span><span class="n">pi_state_cache</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="n">atomic_t</span> <span class="n">fs_excl</span><span class="p">;</span>   <span class="cm">/* holding fs exclusive resources */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">rcu_head</span> <span class="n">rcu</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="cm">/*</span>
-</span><span class='line'><span class="cm">    * cache last used pipe for splice</span>
-</span><span class='line'><span class="cm">    */</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">pipe_inode_info</span> <span class="o">*</span><span class="n">splice_pipe</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#ifdef  CONFIG_TASK_DELAY_ACCT</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">task_delay_info</span> <span class="o">*</span><span class="n">delays</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="cp">#ifdef CONFIG_FAULT_INJECTION</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">make_it_fail</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#endif</span>
-</span><span class='line'>    <span class="k">struct</span> <span class="n">prop_local_single</span> <span class="n">dirties</span><span class="p">;</span>
-</span><span class='line'><span class="p">};</span>
-</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+ {%codeblock lang:c%}</p>
+
+<pre><code>struct task_struct {
+    volatile long state;    /* 进程状态：-1 表示不可运行, 0 表示可运行, &gt;0 表示停止 */
+    void *stack;  /* 进程内核栈*/
+    atomic_t usage;
+    /* 
+      每个进程当前的状态标志：
+      0x00000002 表示进程正在在被创建
+      0x00000004 表示进程正准备退出
+      0x00000040 表示此进程被fork系统调用创建，但并没有执行exec
+      0x00000400 表示此进程由于其它进行发送相关信号矶被杀死 
+     */
+    unsigned int flags; 
+    unsigned int ptrace;
+
+    int lock_depth;     /* 大内核锁深度 */
+
+    #ifdef CONFIG_SMP
+    #ifdef __ARCH_WANT_UNLOCKED_CTXSW
+    int oncpu;  /* 指示进程运行的CPU */
+    #endif
+    #endif
+    /* 
+     * static_prio是表态优先级，也就是进程启动时分配的优先级
+     * prio,normal_prio是动态优先级 
+     */
+    int prio, static_prio, normal_prio; 
+    /* run_list是一个表头，用于维护包含各进程的一个运行表*/
+    struct list_head run_list;
+    const struct sched_class *sched_class; /*表示该进程所属的调用器类*/
+    struct sched_entity se; /* 调度实体*/
+
+    #ifdef CONFIG_PREEMPT_NOTIFIERS
+    /* 结构体preempt_notifier链表，与抢占有关*/
+    struct hlist_head preempt_notifiers;
+    #endif
+
+    unsigned short ioprio;
+    /*
+    fpu_counter 包含了浮点运算单元用到的上下文切换
+    */
+    unsigned char fpu_counter;
+    s8 oomkilladj; /* OOM kill score adjustment (bit shift). */
+    #ifdef CONFIG_BLK_DEV_IO_TRACE
+    unsigned int btrace_seq;
+    #endif
+
+    /*
+     * policy保存了对该进程应用的调度策略，有5个可能的值
+     * SCHED_NORMAL 用于普通进程，通过完全公平调度器来处理。
+     * SCHED_BATCH和SCHED_IDLE 也通过完全公平调度器来处理，不过用于次要的进程。
+     * SCHED_BATCH用于交互，CPU使用密集的批处理进程。
+     * SCHED_RR和SCHED_FIFO用于实现软实时进程，SCHED_RR实现了一种循环方法，而SCHED_FIFO则使用先进先出机制。
+     */
+    unsigned int policy;  /* 高度策略 */
+    /*cpus_allowed是一个位域，在多处理品系统上使用，用来限制进程可以在哪些CPU上运行*/
+    cpumask_t cpus_allowed; /* 多核体系结构中管理CPU的位图*/
+    unsigned int time_slice; /*指定进程可使用CPU的剩余时间段*/
+
+    #if defined(CONFIG_SCHEDSTATS) || defined(CONFIG_TASK_DELAY_ACCT)
+    struct sched_info sched_info;
+    #endif
+
+    struct list_head tasks;
+    /*
+    * ptrace_list/ptrace_children forms the list of my children
+    * that were stolen by a ptracer.
+    */
+    struct list_head ptrace_children;
+    struct list_head ptrace_list;
+
+    struct mm_struct *mm, *active_mm;
+
+    /* task state */
+    struct linux_binfmt *binfmt;
+    int exit_state;
+    int exit_code, exit_signal;
+    int pdeath_signal;  /*  The signal sent when the parent dies  */
+    /* ??? */
+    unsigned int personality;
+    unsigned did_exec:1;
+    pid_t pid; /* 全局进程ID*/
+    pid_t tgid; /* 局部进程ID*/
+
+    #ifdef CONFIG_CC_STACKPROTECTOR
+    /* Canary value for the -fstack-protector gcc feature */
+    unsigned long stack_canary;
+    #endif
+    /* 
+    * pointers to (original) parent process, youngest child, younger sibling,
+    * older sibling, respectively.  (p-&gt;father can be replaced with 
+    * p-&gt;parent-&gt;pid)
+    */
+    struct task_struct *real_parent; /* real parent process (when being debugged) */
+    struct task_struct *parent; /* parent process */
+    /*
+    * children/sibling forms the list of my children plus the
+    * tasks I'm ptracing.
+    */
+    struct list_head children;  /* list of my children */
+    struct list_head sibling;   /* linkage in my parent's children list */
+    struct task_struct *group_leader;   /* threadgroup leader */
+
+    /* PID/PID hash table linkage. */
+    struct pid_link pids[PIDTYPE_MAX];
+    struct list_head thread_group;
+
+    struct completion *vfork_done;      /* for vfork() */
+    int __user *set_child_tid;      /* CLONE_CHILD_SETTID */
+    int __user *clear_child_tid;        /* CLONE_CHILD_CLEARTID */
+
+    /*
+     *表示实时进程的优先级，最低的实时优先级为0，最高的优先级是99。值越大，表明优先级越高，不同于nice值
+     */
+    unsigned int rt_priority;
+    cputime_t utime, stime, utimescaled, stimescaled;
+    cputime_t gtime;
+    cputime_t prev_utime, prev_stime;
+    unsigned long nvcsw, nivcsw; /* context switch counts */
+    struct timespec start_time;         /* monotonic time */
+    struct timespec real_start_time;    /* boot based time */
+    /* mm fault and swap info: this can arguably be seen as either mm-specific or thread-specific */
+    unsigned long min_flt, maj_flt;
+
+    cputime_t it_prof_expires, it_virt_expires;
+    unsigned long long it_sched_expires;
+    struct list_head cpu_timers[3];
+
+    /* process credentials */
+    uid_t uid,euid,suid,fsuid;
+    gid_t gid,egid,sgid,fsgid;
+    struct group_info *group_info;
+    kernel_cap_t   cap_effective, cap_inheritable, cap_permitted;
+    unsigned keep_capabilities:1;
+    struct user_struct *user;
+    #ifdef CONFIG_KEYS
+    struct key *request_key_auth;   /* assumed request_key authority */
+    struct key *thread_keyring; /* keyring private to this thread */
+    unsigned char jit_keyring;  /* default keyring to attach requested keys to */
+    #endif
+    char comm[TASK_COMM_LEN]; /* executable name excluding path
+                 - access with [gs]et_task_comm (which lock
+                   it with task_lock())
+                 - initialized normally by flush_old_exec */
+    /* file system info */
+    int link_count, total_link_count;
+    #ifdef CONFIG_SYSVIPC
+    /* ipc stuff */
+    struct sysv_sem sysvsem;
+    #endif
+    /* CPU-specific state of this task */
+    struct thread_struct thread;
+    /* filesystem information */
+    struct fs_struct *fs;
+    /* open file information */
+    struct files_struct *files;
+    /* namespaces */
+    struct nsproxy *nsproxy;
+    /* signal handlers */
+    struct signal_struct *signal;
+    struct sighand_struct *sighand;
+
+    sigset_t blocked, real_blocked;
+    sigset_t saved_sigmask;     /* To be restored with TIF_RESTORE_SIGMASK */
+    struct sigpending pending;
+
+    unsigned long sas_ss_sp;
+    size_t sas_ss_size;
+    int (*notifier)(void *priv);
+    void *notifier_data;
+    sigset_t *notifier_mask;
+    #ifdef CONFIG_SECURITY
+    void *security;
+    #endif
+    struct audit_context *audit_context;
+    seccomp_t seccomp;
+
+    /* Thread group tracking */
+    u32 parent_exec_id;
+    u32 self_exec_id;
+    /* Protection of (de-)allocation: mm, files, fs, tty, keyrings */
+    spinlock_t alloc_lock;
+
+    /* Protection of the PI data structures: */
+    spinlock_t pi_lock;
+
+    #ifdef CONFIG_RT_MUTEXES
+    /* PI waiters blocked on a rt_mutex held by this task */
+    struct plist_head pi_waiters;
+    /* Deadlock detection and priority inheritance handling */
+    struct rt_mutex_waiter *pi_blocked_on;
+    #endif
+
+    #ifdef CONFIG_DEBUG_MUTEXES
+    /* mutex deadlock detection */
+    struct mutex_waiter *blocked_on;
+    #endif
+    #ifdef CONFIG_TRACE_IRQFLAGS
+    unsigned int irq_events;
+    int hardirqs_enabled;
+    unsigned long hardirq_enable_ip;
+    unsigned int hardirq_enable_event;
+    unsigned long hardirq_disable_ip;
+    unsigned int hardirq_disable_event;
+    int softirqs_enabled;
+    unsigned long softirq_disable_ip;
+    unsigned int softirq_disable_event;
+    unsigned long softirq_enable_ip;
+    unsigned int softirq_enable_event;
+    int hardirq_context;
+    int softirq_context;
+    #endif
+    #ifdef CONFIG_LOCKDEP
+    # define MAX_LOCK_DEPTH 30UL
+    u64 curr_chain_key;
+    int lockdep_depth;
+    struct held_lock held_locks[MAX_LOCK_DEPTH];
+    unsigned int lockdep_recursion;
+    #endif
+
+    /* journalling filesystem info */
+    void *journal_info;
+
+    /* stacked block device info */
+    struct bio *bio_list, **bio_tail;
+
+    /* VM state */
+    struct reclaim_state *reclaim_state;
+
+    struct backing_dev_info *backing_dev_info;
+
+    struct io_context *io_context;
+
+    unsigned long ptrace_message;
+    siginfo_t *last_siginfo; /* For ptrace use.  */
+    #ifdef CONFIG_TASK_XACCT
+    /* i/o counters(bytes read/written, #syscalls */
+    u64 rchar, wchar, syscr, syscw;
+    #endif
+    struct task_io_accounting ioac;
+    #if defined(CONFIG_TASK_XACCT)
+    u64 acct_rss_mem1;  /* accumulated rss usage */
+    u64 acct_vm_mem1;   /* accumulated virtual memory usage */
+    cputime_t acct_stimexpd;/* stime since last update */
+    #endif
+    #ifdef CONFIG_NUMA
+    struct mempolicy *mempolicy;
+    short il_next;
+    #endif
+    #ifdef CONFIG_CPUSETS
+    nodemask_t mems_allowed;
+    int cpuset_mems_generation;
+    int cpuset_mem_spread_rotor;
+    #endif
+    #ifdef CONFIG_CGROUPS
+    /* Control Group info protected by css_set_lock */
+    struct css_set *cgroups;
+    /* cg_list protected by css_set_lock and tsk-&gt;alloc_lock */
+    struct list_head cg_list;
+    #endif
+    #ifdef CONFIG_FUTEX
+    struct robust_list_head __user *robust_list;
+    #ifdef CONFIG_COMPAT
+    struct compat_robust_list_head __user *compat_robust_list;
+    #endif
+    struct list_head pi_state_list;
+    struct futex_pi_state *pi_state_cache;
+    #endif
+    atomic_t fs_excl;   /* holding fs exclusive resources */
+    struct rcu_head rcu;
+
+    /*
+    * cache last used pipe for splice
+    */
+    struct pipe_inode_info *splice_pipe;
+    #ifdef  CONFIG_TASK_DELAY_ACCT
+    struct task_delay_info *delays;
+    #endif
+    #ifdef CONFIG_FAULT_INJECTION
+    int make_it_fail;
+    #endif
+    struct prop_local_single dirties;
+};
+</code></pre>
+
+<p>{%endcodeblock%}</p>
 ]]></content>
   </entry>
   
